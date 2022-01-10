@@ -32,7 +32,7 @@ class ServiceConfigTest {
      * This unit-test probably fails when the template is applied and a proper project is taking form.
      * That is okay. It is only here to serve as a temporary demonstration of unit-testing and configuration.
      */
-    @Test
+/*    @Test
     void sampleConfigTest() throws IOException {
         // Pretty hacky, but it is only a sample unit test
         Path knownFile = Path.of(Resolver.resolveURL("logback-test.xml").getPath());
@@ -49,5 +49,5 @@ class ServiceConfigTest {
 
         // Real value in environment
         assertEquals("real_dbpassword", ServiceConfig.getConfig().getString("config.backend.password"));
-    }
+    }*/
 }

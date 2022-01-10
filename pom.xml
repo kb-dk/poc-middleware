@@ -189,6 +189,12 @@
             <artifactId>swagger-ui</artifactId>
             <version>3.32.5</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable -->
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.2</version>
+        </dependency>
 
         <!-- openapitools dependency -->
         <dependency>
@@ -295,7 +301,6 @@
             </exclusions>
         </dependency>
 
-
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider -->
 
 
@@ -362,6 +367,7 @@
                     <generateSupportingFiles>false</generateSupportingFiles>
                     <generateApiTests>false</generateApiTests>
                     <generateModelDocumentation>true</generateModelDocumentation>
+                    <generateModelTests>false</generateModelTests>
                     <generateApis>true</generateApis>
                     <output>${project.basedir}</output>
                     <templateDirectory>src/main/templates/</templateDirectory>
@@ -406,9 +412,7 @@
                         </goals>
                         <configuration>
                             <inputSpec>${project.build.outputDirectory}/openapi_v1.yaml</inputSpec>
-                            <ignoreFileOverride>
-                                ${project.basedir}/.openapi-codegen-ignore-api
-                            </ignoreFileOverride>
+                            <ignoreFileOverride>${project.basedir}/.openapi-codegen-ignore-api</ignoreFileOverride>
 
                             <configOptions>
                                 <apiPackage>${project.package}.api.v1</apiPackage>
@@ -443,9 +447,69 @@
                         </configuration>
                     </execution>
 
-                    
 
+                    <!-- Client stubs -->
+                    <execution>
+                        <id>v1: Generate client stubs</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/poc-backend-openapi_v1.yaml</inputSpec>
+                            <ignoreFileOverride>${project.basedir}/.openapi-backend-codegen-ignore-api</ignoreFileOverride>
+                            <generatorName>java</generatorName>
+                            <library>native</library>
+                            <generateSupportingFiles>true</generateSupportingFiles> <!-- Generates client and some junk -->
+                            <configOptions>
+                                <apiPackage>${project.package}.backend.api.v1</apiPackage>
+                                <modelPackage>${project.package}.backend.model.v1</modelPackage>
+                                <sourceFolder>target/generated-sources</sourceFolder>
+                                <implFolder>target/generated-sources</implFolder>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
+            </plugin>
+
+            <!-- Clean up after the over-eager generateSupportingFiles needed for the client generation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>clean-unneeded</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+
+                        <configuration>
+                            <tasks>
+                                <echo message="Cleaning up after OpenAPI generateSupportingFiles..."/>
+                                <delete>
+                                    <fileset dir="${project.basedir}">
+                                        <include name="src/main/AndroidManifest.xml" />
+                                        <include name=".travis.yml" />
+                                        <include name="build.gradle" />
+                                        <include name="build.sbt" />
+                                        <include name="git_push.sh" />
+                                        <include name="gradle.properties" />
+                                        <include name="gradlew" />
+                                        <include name="gradlew.bat" />
+                                        <include name="settings.gradle" />
+                                    </fileset>
+                                    <fileset dir="${project.basedir}/docs">
+                                        <include name="**Dto.md" />
+                                        <include name="PocBackendApi.md" />
+                                    </fileset>
+                                </delete>
+                                <delete dir="${project.basedir}/gradle" includeemptydirs="true"/>
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+
             </plugin>
 
             <plugin>

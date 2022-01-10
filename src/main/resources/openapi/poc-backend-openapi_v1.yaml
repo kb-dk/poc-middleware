@@ -1,0 +1,241 @@
+openapi: 3.0.2
+info:
+  version: 'v1'
+  title: 'poc-backend'
+  description: |
+    poc-backend by the Royal Danish Library
+  contact:
+    email: 'te@kb.dk'
+  license:
+    name: 'Apache License, Version 2.0'
+    url: 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+servers:
+  #  /api must match servlet-mapping in web.xml
+  - url: '/poc-backend/v1'
+    description: 'Version 1'
+
+paths:
+  /ping:
+    get:
+      tags:
+        - 'poc-backend'
+      summary: 'Ping the server to check if the server is reachable.'
+      operationId: ping
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+        '406':
+          description: 'Not Acceptable'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 'Internal Error'
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /book/{id}:
+    get:
+      tags:
+        - 'poc-backend'
+      summary: 'Retrieves metadata for a single book'
+      operationId: getBook
+      parameters:
+        - name: id
+          in: path
+          description: 'The ID for the book to retrieve'
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            example: 'book_id87'
+      responses:
+        '200':
+          description: 'JSON-compliant representation of the Book.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalBook'
+        '404':
+          description: 'Not found'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "HTTP 404: Not Found"
+    delete:
+      tags:
+        - 'poc-backend'
+      summary: 'Deletes metadata for a single book'
+      operationId: deleteBook
+      parameters:
+        - name: id
+          in: path
+          description: 'The ID for the book to delete'
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            example: 'book_id87'
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'Metadata for book "book_id87" was successfully deleted'
+        '404':
+          description: 'Not found'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "HTTP 404: Not Found"
+
+  /book:
+    post:
+      tags:
+        - 'poc-backend'
+      summary: 'Add or update a single book'
+      operationId: addBook
+      responses:
+         '200':
+           description: 'If the book was added successfully'
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/InternalBook'
+      requestBody:
+         description: 'Add or update a single book'
+         required: true
+         content:
+           application/json:
+             schema:
+               $ref: '#/components/schemas/InternalBook'
+           application/xml:
+             schema:
+               $ref: '#/components/schemas/InternalBook'
+           application/x-www-form-urlencoded:
+             schema:
+               $ref: '#/components/schemas/InternalBook'
+
+  # A demonstration of streaming delivery of arbitrary size
+  # Also demonstrates different delivery formats (CVS, JSON, JSON-Lines)
+  /books:
+    get:
+      tags:
+        - 'poc-backend'
+      summary: 'Delivers metadata on books'
+      operationId: getBooks
+      # We assume a very large response here: Too large for showing directly in the Swagger UI.
+      # The Content-Disposition for "x-streamingOutput: true" is set to disable inline display in Swagger UI, but
+      # keep inline display when the link is pasted directly in a browser. Inspect the generated code for tweaks.
+      x-streamingOutput: true
+      parameters:
+        - name: query
+          in: query
+          description: 'Search query for the books'
+          required: false
+          schema:
+            type: string
+            # Note: Constraints are not enforced by Swagger. They are only used as a contract
+            minLength: 1
+            example: 'horses OR cows'
+        - name: max
+          in: query
+          description: 'The maximum number of books to return'
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            example: 87
+        - name: format
+          in: query
+          required: false
+          description: |
+            The delivery format. This can also be specified using headers, as seen in the Responses section.
+            If both headers and format are specified, format takes precedence.
+
+            * JSONL: Newline separated single-line JSON representations of Documents
+            * JSON: Valid JSON in the form of a single array of Documents
+            * CSV: Comma separated, missing values represented with nothing, strings encapsulated in quotes
+          schema:
+            type: string
+            enum:  ['JSONL', 'JSON', 'CSV']
+            example: 'JSONL'
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            # application/x-jsonlines is another possibility. Potayto, potahto
+            application/x-ndjson:
+              schema:
+                description: 'Newline separated single-line JSON representations of Books.\n
+                              See https://github.com/ndjson/ndjson-spec or https://jsonlines.org/ for the format'
+                type: string
+            application/json:
+              schema:
+                description: 'JSON-compliant representation of Books. Note that the structure can be unwieldy for
+                              large exports. Consider using application/x-ndjson instead'
+                type: array
+                items:
+                  $ref: '#/components/schemas/InternalBook'
+            text/csv:
+              schema:
+                description: 'Comma Separated Values, with strings quoted and newline as the string'
+                type: string
+        '400':
+          description: 'Bad request'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "HTTP 404: Not Found"
+
+
+components:
+  schemas:
+
+    InternalBook:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          description: 'Book ID'
+          example: 'book_bookid87'
+        title:
+          type: string
+          description: 'Book title'
+          example: 'Disappeared by the Storm'
+        pages:
+          type: integer
+          format: int32
+          example: 43
+        secret:
+          type: string
+          description: 'Confidental internal information. Not for patrons'
+          example: 'Purchase cost'
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
