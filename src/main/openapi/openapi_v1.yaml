@@ -70,6 +70,11 @@ paths:
                 $ref: '#/components/schemas/Book'
         '404':
           description: 'Not found'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "HTTP 404: Not Found"
     delete:
       tags:
         - '${project.name}'
@@ -95,6 +100,12 @@ paths:
                 example: 'Metadata for book "book_id87" was successfully deleted'
         '404':
           description: 'Not found'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "HTTP 404: Not Found"
+
 
   /book:
     post:
