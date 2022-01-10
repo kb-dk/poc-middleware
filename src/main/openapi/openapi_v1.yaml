@@ -43,64 +43,6 @@ paths:
               schema:
                 type: string
 
-  # This definition uses parameters: http://example.com/myservice/v1/hello?alternateHello=Boston
-  /hello:
-    get:
-      tags:
-        - '${project.name}'
-      summary: 'Request a Hello World message, for testing purposes'
-      operationId: getGreeting
-      parameters:
-        - name: alternateHello
-          in: query
-          description: 'Optional alternative to using the word ''Hello'' in the reply'
-          required: false
-          schema:
-            type: string
-            default: 'World'
-      responses:
-        '200':
-          description: 'A JSON structure containing a Hello World message'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HelloReply'
-
-  # This definition uses path: http://example.com/api/article/article-123A-v2
-  /article/{id}:
-    get:
-      tags:
-        - '${project.name}'
-      summary: 'Sample OpenAPI definition for a service that constructs a PDF and delivers it'
-      operationId: getArticle
-      # We assume a very large response here: Too large for showing directly in the Swagger UI.
-      # The Content-Disposition for "x-streamingOutput: true" is set to disable inline display in Swagger UI, but
-      # keep inline display when the link is pasted directly in a browser. Inspect the generated code for tweaks.
-      x-streamingOutput: true
-      parameters:
-        - name: id
-          in: path
-          description: 'The ID of the article to process'
-          required: true
-          schema:
-            type: string
-            # Note: Constraints are not enforced by Swagger. They are only used as a contract
-            minLength: 1
-            example: 'article-123A-v2'
-      responses:
-        '200':
-          description: 'OK'
-          content:
-            text/plain:
-              schema:
-                type: string
-        '404':
-          description: 'Article ID is unknown'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
   # A demonstration of using the same API endpoint for retrieval, deletion and addition/update
   # This is more or less a mirror of /pet in https://petstore3.swagger.io/
   /book/{id}:
@@ -121,11 +63,10 @@ paths:
             example: 'book_id87'
       responses:
         '200':
-          description: 'OK'
+          description: 'JSON-compliant representation of the Book.'
           content:
             application/json:
               schema:
-                description: 'JSON-compliant representation of the Book.'
                 $ref: '#/components/schemas/Book'
         '404':
           description: 'Not found'
@@ -251,65 +192,8 @@ paths:
         '400':
           description: 'Bad request'
 
-  # This definition uses multi-part POST to allow for uploading of an image with arguments
-  # https://swagger.io/docs/specification/describing-request-body/file-upload/
-  /colorizer:
-    post:
-      tags:
-        - '${project.name}'
-      summary: 'Perform some image processing and return the result as an image'
-      operationId: colorize
-      # In this case we would probably want to tweak the generated code for Content-Disposition so that the
-      # delivered image is displayed inline when using the Swagger UI. Inspect the generated code for how to do this.
-      x-streamingOutput: true
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required:
-                - image
-              properties:
-                # The POSTed image can be retrieved using imageDetail.getDataHandler().getInputStream()
-                image:
-                  description: 'The image to use as source for the colorization'
-                  type: string
-                  format: binary
-                method:
-                  description: 'The algorithm used to colorize the image'
-                  type: string
-                  enum: [Random, CNN-1, GAN-1]
-                  default: GAN-1
-                  example: GAN-1
-                intensity:
-                  description: 'The intensity of the colorization'
-                  type: number
-                  format: double
-                  # Note: Constraints are not enforced by Swagger. They are only used as a contract
-                  minimum: 0.0
-                  maximum: 1.0
-                  default: 0.8
-                  example: 0.8
-
-      responses:
-        '200':
-          description: 'The colorized image'
-          content:
-            image/jpeg:
-              schema:
-                type: string
-
 components:
   schemas:
-
-    HelloReply:
-      type: object
-      required:
-        - message
-      properties:
-        message:
-          type: string
-          description: 'Greeting from the API'
 
     Book:
       type: object
