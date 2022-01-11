@@ -1,6 +1,9 @@
 package dk.kb.poc.api.v1.impl;
 
+import dk.kb.poc.backend.api.v1.PocBackendApi;
+import dk.kb.poc.backend.invoker.v1.ApiClient;
 import dk.kb.poc.api.v1.PocMiddlewareApi;
+import dk.kb.poc.backend.invoker.v1.Configuration;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
@@ -135,6 +138,14 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     public BookDto getBook(String id) throws ServiceException {
         log.info("getBook({}) begin", id);
         try {
+
+            ApiClient defaultClient = Configuration.getDefaultApiClient();
+            defaultClient.setBasePath("http://localhost/poc-backend/v1");
+
+            // Not working below as it is an interface
+//            PocBackendApi apiInstance = new PocBackendApi(defaultClient);
+
+            //new ApiClient().setBasePath("http://localhost:9060/poc-backend/v1/").;
             throw new UnsupportedOperationException("Not implemented yet (generate client Dto's for the backend serice and call that)");
         } catch (Exception e){
             throw handleException(e);
