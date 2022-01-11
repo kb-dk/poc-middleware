@@ -1,9 +1,8 @@
 package dk.kb.poc.api.v1.impl;
 
+import dk.kb.poc.BackendHelper;
 import dk.kb.poc.backend.api.v1.PocBackendApi;
-import dk.kb.poc.backend.invoker.v1.ApiClient;
 import dk.kb.poc.api.v1.PocMiddlewareApi;
-import dk.kb.poc.backend.invoker.v1.Configuration;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
@@ -71,6 +70,8 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     @Context
     private transient MessageContext messageContext;
 
+    private static final PocBackendApi backend = BackendHelper.getBackend();
+
 
     /**
      * Add or update a single book
@@ -88,7 +89,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     public BookDto addBook(BookDto bookDto) throws ServiceException {
         log.info("addBook({}) begin", bookDto);
         try {
-            throw new UnsupportedOperationException("Not implemented yet (generate client Dto's for the backend serice and call that)");
+            return BackendHelper.internalBookToBook(backend.addBook(BackendHelper.bookToInternalBook(bookDto)));
         } catch (Exception e){
             throw handleException(e);
         } finally {
@@ -113,7 +114,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     public String deleteBook(String id) throws ServiceException {
         log.info("deleteBook({}) begin", id);
         try {
-            throw new UnsupportedOperationException("Not implemented yet (generate client Dto's for the backend serice and call that)");
+            return backend.deleteBook(id);
         } catch (Exception e){
             throw handleException(e);
         } finally {
@@ -138,15 +139,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     public BookDto getBook(String id) throws ServiceException {
         log.info("getBook({}) begin", id);
         try {
-
-            ApiClient defaultClient = Configuration.getDefaultApiClient();
-            defaultClient.setBasePath("http://localhost/poc-backend/v1");
-
-            // Not working below as it is an interface
-            PocBackendApi apiInstance = new PocBackendApi(defaultClient);
-
-            //new ApiClient().setBasePath("http://localhost:9060/poc-backend/v1/").;
-            throw new UnsupportedOperationException("Not implemented yet (generate client Dto's for the backend serice and call that)");
+            return BackendHelper.internalBookToBook(backend.getBook(id));
         } catch (Exception e){
             throw handleException(e);
         } finally {
@@ -221,8 +214,14 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     public String ping() throws ServiceException {
         log.info("ping begin");
         try {
-            // TODO: Add piped ping from backend?
-            return "Pong from middleware";
+            String backendPing;
+            try {
+                backendPing = BackendHelper.ping();
+            } catch (Exception e) {
+                log.warn("Unable to ping backend", e);
+                return "Pong from middleware (backend not available, error: '" + e.getMessage() + "')";
+            }
+            return "Pong from middleware (transitive ping to backend gave: '" + backendPing + "')";
         } catch (Exception e){
             throw handleException(e);
         } finally {

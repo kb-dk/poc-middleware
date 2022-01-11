@@ -318,7 +318,6 @@
 
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider -->
 
-
     </dependencies>
 
     <build>
@@ -440,8 +439,8 @@
                     </execution>
                     <execution>
                         <!-- The purpose it to generate skeleton implementation classes, if such classes are not already existing.
-                         Since we always want to overwrite existing api & model-files when the OpenAPI specification is changed,
-                         but never want to overwrite existing implementation-files, we need to do the generation in 2 steps. -->
+                             Since we always want to overwrite existing api & model-files when the OpenAPI specification is changed,
+                             but never want to overwrite existing implementation-files, we need to do the generation in 2 steps. -->
                         <id>v1: generate skeleton impl</id>
                         <goals>
                             <goal>generate</goal>
@@ -462,9 +461,9 @@
                     </execution>
 
 
-                    <!-- Client stubs -->
+                    <!-- Client for the backend -->
                     <execution>
-                        <id>v1: Generate client stubs</id>
+                        <id>Generate client for the backend</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -474,7 +473,8 @@
                             <generatorName>java</generatorName>
                             <library>native</library>
                             <generateSupportingFiles>true</generateSupportingFiles>
-                            <!--Do NOT use the customised templates as they are only for the webservice part, not the client-->
+                            <!-- Do NOT use the customised templates as they are only for the webservice part, not the client-->
+                            <!-- Hacked by Asger by setting to an existing folder without templates -->
                             <templateDirectory>src/main/</templateDirectory>
                             <configOptions>
                                 <apiPackage>${project.package}.backend.api.v1</apiPackage>
@@ -489,8 +489,6 @@
                 </executions>
             </plugin>
 
-
-
             <!-- Clean up after the over-eager generateSupportingFiles needed for the client generation -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -499,7 +497,7 @@
                 <executions>
                     <execution>
                         <id>clean-unneeded</id>
-                        <phase>package</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
@@ -521,15 +519,54 @@
                                     </fileset>
                                     <fileset dir="${project.basedir}/docs">
                                         <include name="**Dto.md" />
-<!--                                        <include name="PocBackendApi.md" />-->
+                                        <include name="PocBackendApi.md" />
                                     </fileset>
                                 </delete>
+                                <delete dir="${project.basedir}/docs" includeemptydirs="true"/>
                                 <delete dir="${project.basedir}/gradle" includeemptydirs="true"/>
                             </tasks>
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
 
+            <!-- The generated classes for the OpenAPI client are problematic. Disable checking of those for now.
+                 This setup, minus the excludes-section, was copied from sbforge-parent 22-->
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <!--
+                    if the used Java version is too new,
+                    don't fail, just do nothing:
+                  -->
+                    <failOnUnsupportedJava>true</failOnUnsupportedJava>
+                    <bundledSignatures>
+                        <!--
+                      This will automatically choose the right
+                      signatures based on 'maven.compiler.target':
+                    -->
+                        <bundledSignature>jdk-unsafe</bundledSignature>
+                        <bundledSignature>jdk-deprecated</bundledSignature>
+                        <!-- disallow undocumented classes like sun.misc.Unsafe: -->
+                        <bundledSignature>jdk-non-portable</bundledSignature>
+                        <!-- don't allow unsafe reflective access: -->
+                        <bundledSignature>jdk-reflection</bundledSignature>
+                    </bundledSignatures>
+                    <excludes>
+                        <exclude>**/PocBackendApi.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>${api.check.phase}</phase>
+                        <goals>
+                            <goal>check</goal>
+                            <goal>testCheck</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>

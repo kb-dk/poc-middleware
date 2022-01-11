@@ -24,7 +24,7 @@ config:
 # The entries in the environment-YAML will override the ones in the behaviour-YAML. The sole purpose of having the
 # structure in the behaviour-YAML is to document what needs to be defined in the environment.
   backend:
-   db: 'http://placeholdermachine:8090/foobar/'
-   user: 'placeholder_dbuser'
-   password: 'placeholder_dbpassword'
-                                                                                                                                                                                           
+    # The URL for the backend service
+    # Sample: http://localhost:9060/poc-backend/v1
+    url: 'http://localhost:9060/poc-backend/v1'
+
