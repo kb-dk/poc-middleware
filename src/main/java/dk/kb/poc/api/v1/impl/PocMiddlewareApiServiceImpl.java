@@ -188,7 +188,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
                 try (ExportWriter writer = ExportWriterFactory.wrap(
                         output, httpServletResponse, httpHeaders,
                         format, ExportWriterFactory.FORMAT.jsonl, false)) {
-                    throw new UnsupportedOperationException("Not implemented yet (generate client Dto's for the backend serice and call that)");
+                    BackendHelper.getBooks(writer, query, max); // Not that format is chosen by BackendHelper
                 }
             };
         } catch (Exception e){

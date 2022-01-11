@@ -14,18 +14,25 @@
  */
 package dk.kb.poc;
 
+import com.google.gson.Gson;
 import dk.kb.poc.backend.api.v1.PocBackendApi;
 import dk.kb.poc.backend.invoker.v1.ApiClient;
 import dk.kb.poc.backend.invoker.v1.Configuration;
 import dk.kb.poc.backend.model.v1.InternalBookDto;
 import dk.kb.poc.config.ServiceConfig;
 import dk.kb.poc.model.v1.BookDto;
+import dk.kb.poc.webservice.ExportWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
@@ -107,4 +114,37 @@ public class BackendHelper {
                   internal.getSecret(), internal.getId());
         return book;
     }
+
+    /**
+     * Passes the request on to the backend, streaming the result and transforming th internal books to external form
+     * before adding to the stated writer.
+     * @param writer the receiver of {@link BookDto}s.
+     * @param query a query for books.
+     * @param max the maximum amount of books to deliver.
+     */
+    public static void getBooks(ExportWriter writer, String query, Long max) throws IOException {
+        URI getBooksURI = UriBuilder.fromUri(backendURI)
+                .path("books")
+                .queryParam("query", query)
+                .queryParam("max", max)
+                .build();
+
+        HttpURLConnection urlCon = (HttpURLConnection) getBooksURI.toURL().openConnection();
+        urlCon.setRequestProperty("Accept", "application/json");
+        urlCon.setRequestProperty("Connection", "close");
+        urlCon.setRequestMethod("GET");
+
+        // https://www.amitph.com/java-parse-large-json-files/
+        try (InputStream jsonStream = urlCon.getInputStream();
+             Reader isReader = new InputStreamReader(jsonStream);
+             JsonReader reader = new JsonReader(isReader)) {
+            reader.beginArray();
+            while (reader.hasNext()) {
+                InternalBookDto internal = new Gson().fromJson(reader, InternalBookDto.class);
+                writer.write(internalBookToBook(internal));
+            }
+            reader.endArray();
+        }
+    }
+
 }
