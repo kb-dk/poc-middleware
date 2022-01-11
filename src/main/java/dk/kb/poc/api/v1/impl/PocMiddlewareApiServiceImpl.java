@@ -29,7 +29,7 @@ import java.util.Locale;
 /**
  * poc-middleware
  *
- * <p>poc-middleware by the Royal Danish Library 
+ * <p>poc-middleware by the Royal Danish Library
  *
  */
 public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
@@ -74,9 +74,9 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
 
     /**
      * Add or update a single book
-     * 
+     *
      * @param bookDto: Add or update a single book
-     * 
+     *
      * @return <ul>
       *   <li>code = 200, message = "If the book was added successfully", response = BookDto.class</li>
       *   </ul>
@@ -98,9 +98,9 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
 
     /**
      * Deletes metadata for a single book
-     * 
+     *
      * @param id: The ID for the book to delete
-     * 
+     *
      * @return <ul>
       *   <li>code = 200, message = "OK", response = String.class</li>
       *   <li>code = 404, message = "Not found"</li>
@@ -123,9 +123,9 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
 
     /**
      * Retrieves metadata for a single book
-     * 
+     *
      * @param id: The ID for the book to retrieve
-     * 
+     *
      * @return <ul>
       *   <li>code = 200, message = "JSON-compliant representation of the Book.", response = BookDto.class</li>
       *   <li>code = 404, message = "Not found"</li>
@@ -143,7 +143,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
             defaultClient.setBasePath("http://localhost/poc-backend/v1");
 
             // Not working below as it is an interface
-//            PocBackendApi apiInstance = new PocBackendApi(defaultClient);
+            PocBackendApi apiInstance = new PocBackendApi(defaultClient);
 
             //new ApiClient().setBasePath("http://localhost:9060/poc-backend/v1/").;
             throw new UnsupportedOperationException("Not implemented yet (generate client Dto's for the backend serice and call that)");
@@ -156,13 +156,13 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
 
     /**
      * Delivers metadata on books
-     * 
+     *
      * @param query: Search query for the books
-     * 
+     *
      * @param max: The maximum number of books to return
-     * 
-     * @param format: The delivery format. This can also be specified using headers, as seen in the Responses section. If both headers and format are specified, format takes precedence.  * JSONL: Newline separated single-line JSON representations of Documents * JSON: Valid JSON in the form of a single array of Documents * CSV: Comma separated, missing values represented with nothing, strings encapsulated in quotes 
-     * 
+     *
+     * @param format: The delivery format. This can also be specified using headers, as seen in the Responses section. If both headers and format are specified, format takes precedence.  * JSONL: Newline separated single-line JSON representations of Documents * JSON: Valid JSON in the form of a single array of Documents * CSV: Comma separated, missing values represented with nothing, strings encapsulated in quotes
+     *
      * @return <ul>
       *   <li>code = 200, message = "OK", response = String.class</li>
       *   <li>code = 400, message = "Bad request"</li>
@@ -207,7 +207,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
 
     /**
      * Ping the server to check if the server is reachable.
-     * 
+     *
      * @return <ul>
       *   <li>code = 200, message = "OK", response = String.class</li>
       *   <li>code = 406, message = "Not Acceptable", response = ErrorDto.class</li>

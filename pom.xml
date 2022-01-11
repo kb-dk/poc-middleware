@@ -474,12 +474,15 @@
                             <generatorName>java</generatorName>
                             <library>native</library>
                             <generateSupportingFiles>true</generateSupportingFiles>
+                            <!--Do NOT use the customised templates as they are only for the webservice part, not the client-->
+                            <templateDirectory>src/main/</templateDirectory>
                             <configOptions>
                                 <apiPackage>${project.package}.backend.api.v1</apiPackage>
                                 <modelPackage>${project.package}.backend.model.v1</modelPackage>
                                 <invokerPackage>${project.package}.backend.invoker.v1</invokerPackage>
                                 <sourceFolder>target/generated-sources</sourceFolder>
                                 <implFolder>target/generated-sources</implFolder>
+
                             </configOptions>
                         </configuration>
                     </execution>
