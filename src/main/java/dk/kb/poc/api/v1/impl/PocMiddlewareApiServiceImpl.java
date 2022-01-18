@@ -6,9 +6,11 @@ import dk.kb.poc.api.v1.PocMiddlewareApi;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
+import dk.kb.poc.webservice.KBOAuth;
 import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.poc.webservice.exception.InvalidArgumentServiceException;
 import dk.kb.poc.webservice.exception.ServiceException;
+import org.apache.cxf.interceptor.InInterceptors;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ import java.util.Locale;
  * <p>poc-middleware by the Royal Danish Library
  *
  */
+@InInterceptors(interceptors = "dk.kb.poc.webservice.KBInterceptor")
 public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     private static final Logger log = LoggerFactory.getLogger(PocMiddlewareApiServiceImpl.class);
 
@@ -211,6 +214,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
       * @implNote return will always produce a HTTP 200 code. Throw ServiceException if you need to return other codes
      */
     @Override
+    @KBOAuth(roles={"read", "public"})
     public String ping() throws ServiceException {
         log.info("ping begin");
         try {

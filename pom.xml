@@ -315,6 +315,28 @@
             <artifactId>gson</artifactId>
             <version>2.8.9</version>
         </dependency>
+        <!--<dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.10.1</version>
+        </dependency>-->
+        <dependency>
+          <groupId>org.bitbucket.b_c</groupId>
+          <artifactId>jose4j</artifactId>
+          <version>0.7.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-core</artifactId>
+            <version>4.6.0.Final</version>
+            <exclusions>
+                <exclusion>
+                    <!-- mockserver-junit-jupiter has 1.1, but transitive resolving has 1.2.2 somewhere-->
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/com.google.code.gson/gson -->
 
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider -->
@@ -417,27 +439,6 @@
                          * Update src/main/webapp/api/index.html
                     -->
 
-                    <execution>
-                        <!-- Generate API and Model-files from the OpenAPI specification (positioned under the target/generated-sources/ folder).
-                             These files are overwritten on all builds, so they should never be edited manually. -->
-                        <id>v1: generate api classes</id>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.build.outputDirectory}/openapi_v1.yaml</inputSpec>
-                            <ignoreFileOverride>${project.basedir}/.openapi-codegen-ignore-api</ignoreFileOverride>
-
-                            <configOptions>
-                                <apiPackage>${project.package}.api.v1</apiPackage>
-                                <modelPackage>${project.package}.model.v1</modelPackage>
-                                <!-- Setting this to true overwrites existing implementations.
-                                     Only set it temporarily when creating a new project -->
-                                <generateOperationBody>false</generateOperationBody>
-                                <sourceFolder>target/generated-sources</sourceFolder>
-                            </configOptions>
-                        </configuration>
-                    </execution>
                     <execution>
                         <!-- The purpose it to generate skeleton implementation classes, if such classes are not already existing.
                              Since we always want to overwrite existing api & model-files when the OpenAPI specification is changed,
