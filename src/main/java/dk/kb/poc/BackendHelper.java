@@ -136,7 +136,7 @@ public class BackendHelper {
 
         // https://www.amitph.com/java-parse-large-json-files/
         try (InputStream jsonStream = urlCon.getInputStream();
-             Reader isReader = new InputStreamReader(jsonStream);
+             Reader isReader = new InputStreamReader(jsonStream, StandardCharsets.UTF_8);
              JsonReader reader = new JsonReader(isReader)) {
             reader.beginArray();
             while (reader.hasNext()) {
