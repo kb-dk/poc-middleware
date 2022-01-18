@@ -438,7 +438,27 @@
                          * Update src/main/webapp/WEB-INF/web.xml
                          * Update src/main/webapp/api/index.html
                     -->
+                    <execution>
+                        <!-- Generate API and Model-files from the OpenAPI specification (positioned under the target/generated-sources/ folder).
+                             These files are overwritten on all builds, so they should never be edited manually. -->
+                        <id>v1: generate api and model classes</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.build.outputDirectory}/openapi_v1.yaml</inputSpec>
+                            <ignoreFileOverride>${project.basedir}/.openapi-codegen-ignore-api</ignoreFileOverride>
 
+                            <configOptions>
+                                <apiPackage>${project.package}.api.v1</apiPackage>
+                                <modelPackage>${project.package}.model.v1</modelPackage>
+                                <!-- Setting this to true overwrites existing implementations.
+                                                         Only set it temporarily when creating a new project -->
+                                <generateOperationBody>false</generateOperationBody>
+                                <sourceFolder>target/generated-sources</sourceFolder>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                     <execution>
                         <!-- The purpose it to generate skeleton implementation classes, if such classes are not already existing.
                              Since we always want to overwrite existing api & model-files when the OpenAPI specification is changed,
