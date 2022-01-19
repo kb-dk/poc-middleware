@@ -6,7 +6,7 @@ import dk.kb.poc.api.v1.PocMiddlewareApi;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
-import dk.kb.poc.webservice.KBOAuth;
+import dk.kb.poc.webservice.KBAuthorization;
 import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.poc.webservice.exception.InvalidArgumentServiceException;
 import dk.kb.poc.webservice.exception.ServiceException;
@@ -33,7 +33,7 @@ import java.util.Locale;
  * <p>poc-middleware by the Royal Danish Library
  *
  */
-@InInterceptors(interceptors = "dk.kb.poc.webservice.KBInterceptor")
+@InInterceptors(interceptors = "dk.kb.poc.webservice.KBAuthorizationInterceptor")
 public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     private static final Logger log = LoggerFactory.getLogger(PocMiddlewareApiServiceImpl.class);
 
@@ -201,6 +201,11 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
         }
     }
 
+    @Override
+    public String status() {
+        return "We're doing great! (access level: public)";
+    }
+
     /**
      * Ping the server to check if the server is reachable.
      *
@@ -214,7 +219,6 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
       * @implNote return will always produce a HTTP 200 code. Throw ServiceException if you need to return other codes
      */
     @Override
-    @KBOAuth(roles={"read", "public"})
     public String ping() throws ServiceException {
         log.info("ping begin");
         try {

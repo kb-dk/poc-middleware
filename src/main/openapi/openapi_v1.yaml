@@ -43,6 +43,23 @@ paths:
               schema:
                 type: string
 
+  /status:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'Retrieve status for the well being of the server, with granularity determined by role.'
+      operationId: status
+      security:
+        - oAuthSample:
+          - public
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+
   # A demonstration of using the same API endpoint for retrieval, deletion and addition/update
   # This is more or less a mirror of /pet in https://petstore3.swagger.io/
   /book/{id}:
