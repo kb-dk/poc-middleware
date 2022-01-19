@@ -76,7 +76,14 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
 
     public KBAuthorizationInterceptor() {
         super(Phase.PRE_INVOKE);
-        YAML conf = ServiceConfig.getConfig().getSubMap(".config.security");
+        YAML conf;
+        if (!ServiceConfig.getConfig().containsKey(".config.security")) {
+            log.warn("Authorization interceptor enabled, but there is no security setup in configuration at " +
+                     "key .config.security");
+            conf = new YAML();
+        } else {
+            conf = ServiceConfig.getConfig().getSubMap(".config.security");
+        }
 
         mode = MODE.valueOf(conf.getString(".mode", MODE.ENABLED.toString()).toUpperCase(Locale.ROOT));
         if (mode == MODE.OFFLINE) {
@@ -277,13 +284,13 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         String issuer = baseurl + "/" + realm;
 
         if (mode == MODE.OFFLINE) {
-            log.info("Authorization mode is " + MODE.OFFLINE + ": Skipping publicKey and expiration checks");
+            log.info("Authorization mode is " + MODE.OFFLINE + ": Skipping realmURL, publicKey and expiration checks");
             return TokenVerifier.create(encodedAccessToken, AccessToken.class)
-                    .withChecks(new TokenVerifier.RealmUrlCheck(issuer)) // String match only
+//                    .withChecks(new TokenVerifier.RealmUrlCheck(issuer)) // String match only
                     .verify()
                     .getToken();
         }
-
+        // TODO: Figure out why there is a "Unchecked generics array creation" warning here and fix it
         return TokenVerifier.create(encodedAccessToken, AccessToken.class)
                 .withChecks(new TokenVerifier.RealmUrlCheck(issuer)) // String match only
                 .withChecks(new TokenVerifier.Predicate<AccessToken>() {
