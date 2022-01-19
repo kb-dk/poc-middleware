@@ -310,7 +310,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         if (!header.containsKey("kid")) {
             throw new VerificationException("No key ID (kid) present in access token header");
         }
-        if (!header.containsKey("issuer")) {
+        if (!header.containsKey("iss")) {
             throw new VerificationException("No issuer (iss) present in access token payload");
         }
         String kid = header.get("kid").toString();
@@ -482,7 +482,6 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
     private String trimTrailingSlash(String s) {
         return s == null || !s.endsWith("/") ? s : s.substring(0, s.length()-1);
     }
-
 
     public String toString() {
         return String.format(Locale.ROOT, "KBInterceptor(mode=%s, baseurl='%s', realms=%s, keysTTL=%ss)",
