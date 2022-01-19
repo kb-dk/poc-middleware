@@ -32,7 +32,7 @@ config:
     # The security mode. Valid values are
     # OFFLINE: No validation of security tokens: All requests are accepted.
     # ENABLED (or no mode set): Validation of security tokens.
-    mode: 'OFFLINE'
+    mode: 'ENABLED'
     baseurl: 'https://keycloak-keycloak.example.org/auth/realms'
     realms:
       - developers
