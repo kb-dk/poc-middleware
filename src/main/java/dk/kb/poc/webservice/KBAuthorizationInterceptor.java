@@ -310,7 +310,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         if (!header.containsKey("kid")) {
             throw new VerificationException("No key ID (kid) present in access token header");
         }
-        if (!header.containsKey("iss")) {
+        if (!payload.containsKey("iss")) {
             throw new VerificationException("No issuer (iss) present in access token payload");
         }
         String kid = header.get("kid").toString();
@@ -466,13 +466,13 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
             BigInteger publicExponent = new BigInteger(1, base64Decode(exponentStr));
 
             try {
-                // TODO: This should probably not be hardcoded
+                // TODO: This should probably not be hardcoded. Fetch from keycloak instead
                 KeyFactory kf = KeyFactory.getInstance("RSA");
                 return kf.generatePublic(new RSAPublicKeySpec(modulus, publicExponent));
             } catch (Exception e) {
                 throw new VerificationException(e);
             }
-
+        // TODO: Kill this abomination
         } catch (Exception e) {
             e.printStackTrace();
         }
