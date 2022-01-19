@@ -17,6 +17,7 @@ package dk.kb.poc.webservice;
 import dk.kb.poc.config.ServiceConfig;
 import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.util.yaml.YAML;
+import io.swagger.annotations.AuthorizationScope;
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
@@ -51,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Intercepts webservices endpoints where the OpenAPI generated interface is annotated with {@code @KBOAuth}.
@@ -117,6 +119,11 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         final String endpoint = message.getExchange().getEndpoint().getEndpointInfo().getName().getLocalPart();
         log.debug("handleMessage({}) called", endpoint);
 
+        if (!isAnnotated(message)) {
+            log.debug("Endpoint '{}' not annotated", endpoint);
+            return;
+        }
+
         Set<String> endpointRoles = getEndpointRoles(message);
         if (endpointRoles.isEmpty()) {
             log.warn("No roles defined for endpoint '{}', even though it is annotated as requiring authentication",
@@ -129,7 +136,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         }
         
         // If authorization is defined we validate it, even if one of the endpoint roles is 'public'
-        // TODO: Inject the Authorization token in the context of the call
+        // TODO: Inject the Authorization token in the context of the call (put it in the Message)
         try {
             AccessToken accessToken = validateAuthorization(message);
             validateRoles(endpoint, accessToken, endpointRoles);
@@ -142,6 +149,19 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
+    private boolean isAnnotated(Message message) {
+        OperationResourceInfo ori = message.getExchange().get(OperationResourceInfo.class);
+        if (ori == null) {
+            return false;
+        }
+        Method method = ori.getAnnotatedMethod();
+        if (method == null) {
+            return false;
+        }
+
+        return method.getDeclaredAnnotation(KBAuthorization.class) != null;
+    }
+
     /**
      * Checks that the roles stated in the accessToken conforms to the endpointRoles.
      * @param endpoint name of the endpoint. Used for exceptions and logging.
@@ -151,16 +171,16 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
      */
     private void validateRoles(String endpoint, AccessToken accessToken, Set<String> endpointRoles)
             throws VerificationException {
-        if (endpointRoles.contains(KBOAuth.PUBLIC)) {
+        if (endpointRoles.contains(KBAuthorization.PUBLIC)) {
             log.debug("Granting access to endpoint '{}' as endpoint roles included '{}'",
-                      endpoint, KBOAuth.PUBLIC);
+                      endpoint, KBAuthorization.PUBLIC);
             return;
         }
 
         Set<String> realmRoles = accessToken.getRealmAccess().getRoles();
-        if (endpointRoles.contains(KBOAuth.ANY) && !realmRoles.isEmpty()) {
+        if (endpointRoles.contains(KBAuthorization.ANY) && !realmRoles.isEmpty()) {
             log.debug("Granting access to endpoint '{}' as endpoint roles included '{}' and realm role count was {}",
-                      endpoint, KBOAuth.PUBLIC, realmRoles.size());
+                      endpoint, KBAuthorization.PUBLIC, realmRoles.size());
             return;
         }
 
@@ -187,14 +207,14 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
                 log.debug("Authorization skipped for endpoint '{}' as mode={}", endpoint, mode);
                 break;
             case ENABLED:
-                if (endpointRoles.contains(KBOAuth.PUBLIC)) {
-                    log.debug("No Authorization defined but endpoint '{}' roles included '{}'",
-                              endpoint, KBOAuth.PUBLIC);
+                if (endpointRoles.contains(KBAuthorization.PUBLIC)) {
+                    log.debug("No Authorization defined in request but endpoint '{}' roles included '{}'",
+                              endpoint, KBAuthorization.PUBLIC);
                     break;
                 }
                 throw new Fault(new ValidationException(
-                        "Authorization failed as there were no Authorization defined and endpoint " +
-                        endpoint + " requires it to be present"));
+                        "Authorization failed as there were no Authorization defined in request and endpoint " +
+                        endpoint + " requires it to be present with roles " + endpointRoles));
             default: {
                 log.error("Unknown authorization mode: " + mode);
                 throw new Fault(new InternalServiceException("Unknown authorization mode" + mode));
@@ -224,13 +244,15 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
             return Collections.emptySet();
         }
 
-        KBOAuth kbOAuth = method.getDeclaredAnnotation(KBOAuth.class);
+        KBAuthorization kbOAuth = method.getDeclaredAnnotation(KBAuthorization.class);
         if (kbOAuth == null) {
             log.warn("No KBOAuth annotation for endpoint {} in OperationResourceInfo. " +
                      "Unable to determine required roles", endpoint);
             return Collections.emptySet();
         }
-        return new HashSet<>(Arrays.asList(kbOAuth.roles()));
+        return Arrays.stream(kbOAuth.scopes())
+                .map(AuthorizationScope::scope)
+                .collect(Collectors.toSet());
     }
 
     /**

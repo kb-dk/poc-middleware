@@ -448,6 +448,8 @@
                         <configuration>
                             <inputSpec>${project.build.outputDirectory}/openapi_v1.yaml</inputSpec>
                             <ignoreFileOverride>${project.basedir}/.openapi-codegen-ignore-api</ignoreFileOverride>
+<!--                            <generatorName>spring</generatorName>
+                            <templateDirectory>src/main/</templateDirectory>-->
 
                             <configOptions>
                                 <apiPackage>${project.package}.api.v1</apiPackage>

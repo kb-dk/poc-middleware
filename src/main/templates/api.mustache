@@ -23,6 +23,8 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.jaxrs.PATCH;
+import dk.kb.poc.webservice.KBAuthorization;
+import io.swagger.annotations.AuthorizationScope;
 {{#useBeanValidation}}
 import javax.validation.constraints.*;
 import javax.validation.Valid;
@@ -62,7 +64,14 @@ public interface {{classname}}  {
 {{#hasConsumes}}
     @Consumes({ {{#consumes}}"{{{mediaType}}}"{{#hasMore}}, {{/hasMore}}{{/consumes}} })
 {{/hasConsumes}}
-{{#hasProduces}}
+{{#hasAuthMethods}}
+    {{#authMethods}}@KBAuthorization(value = "{{name}}"{{#isOAuth}}, scopes = {
+        {{#scopes}}@AuthorizationScope(scope = "{{scope}}", description = "{{description}}"){{#hasMore}},
+        {{/hasMore}}{{/scopes}}
+        }{{/isOAuth}}){{#hasMore}},
+    {{/hasMore}}{{/authMethods}}
+{{/hasAuthMethods}}
+    {{#hasProduces}}
     @Produces({ {{#produces}}"{{{mediaType}}}"{{#hasMore}}, {{/hasMore}}{{/produces}} })
 {{/hasProduces}}
     @ApiOperation(value = "{{{summary}}}", tags={ {{#vendorExtensions.x-tags}}"{{tag}}"{{#hasMore}}, {{/hasMore}}{{/vendorExtensions.x-tags}} })
