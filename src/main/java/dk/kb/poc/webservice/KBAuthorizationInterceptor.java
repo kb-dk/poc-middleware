@@ -19,6 +19,7 @@ import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.util.yaml.YAML;
 import io.swagger.annotations.AuthorizationScope;
 import org.apache.commons.io.IOUtils;
+import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
 import org.apache.cxf.message.Message;
@@ -47,6 +48,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -130,7 +132,8 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
                      endpoint);
         }
 
-        if (!message.containsKey(AUTHORIZATION)) {
+        Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>)message.get(Message.PROTOCOL_HEADERS));
+        if (!headers.containsKey(AUTHORIZATION)) {
             handleNoAuthorization(endpoint, endpointRoles);
             return;
         }
@@ -178,6 +181,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         }
 
         Set<String> realmRoles = accessToken.getRealmAccess().getRoles();
+        log.debug("got roles {} from access token for endpoint {}", realmRoles, endpoint);
         if (endpointRoles.contains(KBAuthorization.ANY) && !realmRoles.isEmpty()) {
             log.debug("Granting access to endpoint '{}' as endpoint roles included '{}' and realm role count was {}",
                       endpoint, KBAuthorization.PUBLIC, realmRoles.size());
@@ -263,7 +267,9 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
      * @return the validated AccessToken.
      */
     private AccessToken validateAuthorization(Message message) throws VerificationException {
-        String authorizationString = message.get(AUTHORIZATION).toString();
+        Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>)message.get(Message.PROTOCOL_HEADERS));
+        String authorizationString = headers.get(AUTHORIZATION).toString();
+        
         if (authorizationString == null || authorizationString.isBlank()) {
             throw new VerificationException("No authorization header in message");
         }
