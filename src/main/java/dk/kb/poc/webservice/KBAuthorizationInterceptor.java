@@ -140,6 +140,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         
         // If authorization is defined we validate it, even if one of the endpoint roles is 'public'
         // TODO: Inject the Authorization token in the context of the call (put it in the Message)
+        // TODO: Mark the Message as authenticated
         try {
             AccessToken accessToken = validateAuthorization(message);
             validateRoles(endpoint, accessToken, endpointRoles);
@@ -267,8 +268,9 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
      * @return the validated AccessToken.
      */
     private AccessToken validateAuthorization(Message message) throws VerificationException {
+        // TODO: Proper look after Bearer
         Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>)message.get(Message.PROTOCOL_HEADERS));
-        String authorizationString = headers.get(AUTHORIZATION).toString();
+        String authorizationString = headers.get(AUTHORIZATION).get(0);
         
         if (authorizationString == null || authorizationString.isBlank()) {
             throw new VerificationException("No authorization header in message");
