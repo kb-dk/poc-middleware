@@ -6,9 +6,11 @@ import dk.kb.poc.api.v1.PocMiddlewareApi;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
+import dk.kb.poc.webservice.KBAuthorization;
 import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.poc.webservice.exception.InvalidArgumentServiceException;
 import dk.kb.poc.webservice.exception.ServiceException;
+import org.apache.cxf.interceptor.InInterceptors;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ import java.util.Locale;
  * <p>poc-middleware by the Royal Danish Library
  *
  */
+@InInterceptors(interceptors = "dk.kb.poc.webservice.KBAuthorizationInterceptor")
 public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     private static final Logger log = LoggerFactory.getLogger(PocMiddlewareApiServiceImpl.class);
 
@@ -196,6 +199,11 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
         } finally {
             log.info("getBooks(query='{}', max={}, format={}) finish", query, max, format);
         }
+    }
+
+    @Override
+    public String status() {
+        return "We're doing great! (access level: public)";
     }
 
     /**

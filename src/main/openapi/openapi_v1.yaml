@@ -43,6 +43,23 @@ paths:
               schema:
                 type: string
 
+  /status:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'Retrieve status for the well being of the server, with granularity determined by role.'
+      operationId: status
+      security:
+        - oAuthSample:
+          - public
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+
   # A demonstration of using the same API endpoint for retrieval, deletion and addition/update
   # This is more or less a mirror of /pet in https://petstore3.swagger.io/
   /book/{id}:
@@ -61,6 +78,9 @@ paths:
             # Note: Constraints are not enforced by Swagger. They are only used as a contract
             minLength: 1
             example: 'book_id87'
+      security:
+        - oAuthSample:
+          - read
       responses:
         '200':
           description: 'JSON-compliant representation of the Book.'
@@ -90,6 +110,9 @@ paths:
             # Note: Constraints are not enforced by Swagger. They are only used as a contract
             minLength: 1
             example: 'book_id87'
+      security:
+        - oAuthSample:
+          - write
       responses:
         '200':
           description: 'OK'
@@ -113,6 +136,9 @@ paths:
         - '${project.name}'
       summary: 'Add or update a single book'
       operationId: addBook
+      security:
+        - oAuthSample:
+          - write
       responses:
          '200':
            description: 'If the book was added successfully'
@@ -179,6 +205,9 @@ paths:
             type: string
             enum:  ['JSONL', 'JSON', 'CSV']
             example: 'JSONL'
+      security:
+        - oAuthSample:
+          - read
       responses:
         '200':
           description: 'OK'
@@ -204,6 +233,21 @@ paths:
           description: 'Bad request'
 
 components:
+
+  securitySchemes:
+
+    oAuthSample:    # <---- arbitrary name
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        implicit:   # <---- OAuth flow(authorizationCode, implicit, password or clientCredentials)
+          authorizationUrl: https://api.example.com/oauth2/authorize
+          scopes:
+            read: 'read data'
+            write: 'modify or delete data'
+            public: 'allowed for all, authorization optional'
+            any: 'allowed for all, but the caller must have an access token'
+
   schemas:
 
     Book:

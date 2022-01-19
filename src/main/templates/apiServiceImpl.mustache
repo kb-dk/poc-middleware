@@ -63,6 +63,7 @@ import org.springframework.stereotype.Service;
  *
  */
 {{/appName}}
+@InInterceptors(interceptors = "dk.kb.poc.webservice.KBInterceptor")
 public class {{classname}}ServiceImpl implements {{classname}} {
     private Logger log = LoggerFactory.getLogger(this.toString());
 
