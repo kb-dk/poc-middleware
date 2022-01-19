@@ -269,6 +269,11 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         }
 
         String[] parts = authorizationString.split(" ");
+        if (!"Bearer".equals(parts[0])) {
+            throw new VerificationException(
+                    "Expected the authorization header to start with 'Bearer ' " +
+                    "but it started with '" + parts[0] + " '");
+        }
         if (parts.length != 2) {
             log.warn("Received Authorization string without a space: '{}'", authorizationString);
             throw new VerificationException("Unsupported authorization String (no space)");

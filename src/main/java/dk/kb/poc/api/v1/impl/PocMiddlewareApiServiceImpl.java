@@ -26,6 +26,7 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Providers;
 import java.util.Locale;
+import java.util.Random;
 
 /**
  * poc-middleware
@@ -204,6 +205,11 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     @Override
     public String status() {
         return "We're doing great! (access level: public)";
+    }
+
+    @Override
+    public String getBookCount() {
+        return Integer.toString(new Random().nextInt(10_000_000));
     }
 
     /**

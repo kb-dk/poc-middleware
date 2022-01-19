@@ -60,6 +60,23 @@ paths:
               schema:
                 type: string
 
+  /bookcount:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'Retrieve the number of books. Requires authorization as it is secret and the result relies in complex internal need-to-know-basis rules'
+      operationId: getBookCount
+      security:
+        - oAuthSample:
+          - any
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+
   # A demonstration of using the same API endpoint for retrieval, deletion and addition/update
   # This is more or less a mirror of /pet in https://petstore3.swagger.io/
   /book/{id}:
