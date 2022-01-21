@@ -513,47 +513,6 @@
                 </executions>
             </plugin>
 
-            <!-- Clean up after the over-eager generateSupportingFiles needed for the client generation -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>clean-unneeded</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-
-                        <configuration>
-                            <tasks>
-                                <echo message="Cleaning up after OpenAPI generateSupportingFiles..."/>
-                                <delete>
-                                    <fileset dir="${project.basedir}">
-                                        <include name="src/main/AndroidManifest.xml" />
-                                        <include name=".travis.yml" />
-                                        <include name="build.gradle" />
-                                        <include name="build.sbt" />
-                                        <include name="git_push.sh" />
-                                        <include name="gradle.properties" />
-                                        <include name="gradlew" />
-                                        <include name="gradlew.bat" />
-                                        <include name="settings.gradle" />
-                                    </fileset>
-                                    <fileset dir="${project.basedir}/docs">
-                                        <include name="**Dto.md" />
-                                        <include name="PocBackendApi.md" />
-                                    </fileset>
-                                </delete>
-                                <delete dir="${project.basedir}/docs" includeemptydirs="true"/>
-                                <delete dir="${project.basedir}/gradle" includeemptydirs="true"/>
-                            </tasks>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- The generated classes for the OpenAPI client are problematic. Disable checking of those for now.
                  This setup, minus the excludes-section, was copied from sbforge-parent 22-->
             <plugin>

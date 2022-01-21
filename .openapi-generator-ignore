@@ -1,0 +1,13 @@
+build.gradle
+.travis.yml
+src/main/AndroidManifest.xml
+build.sbt
+git_push.sh
+gradle.properties
+gradlew
+gradlew.bat
+settings.gradle
+
+docs/
+gradle/
+api/
