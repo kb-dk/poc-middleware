@@ -145,6 +145,13 @@ paths:
               schema:
                 type: string
                 example: "HTTP 404: Not Found"
+        '403':
+          description: 'Forbidden'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "HTTP 403: Forbidden"
 
 
   /book:

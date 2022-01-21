@@ -116,7 +116,7 @@ public class BackendHelper {
     }
 
     /**
-     * Passes the request on to the backend, streaming the result and transforming th internal books to external form
+     * Passes the request on to the backend, streaming the result and transforming the internal books to external form
      * before adding to the stated writer.
      * @param writer the receiver of {@link BookDto}s.
      * @param query a query for books.

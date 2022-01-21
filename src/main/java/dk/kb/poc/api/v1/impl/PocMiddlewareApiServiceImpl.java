@@ -6,7 +6,6 @@ import dk.kb.poc.api.v1.PocMiddlewareApi;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
-import dk.kb.poc.webservice.KBAuthorization;
 import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.poc.webservice.exception.InvalidArgumentServiceException;
 import dk.kb.poc.webservice.exception.ServiceException;

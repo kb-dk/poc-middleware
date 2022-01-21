@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
  * "public" is a reserved role and means that all callers can send requests to the endpoint.
  * It if up to the implementation to determine what the response can be.
  */
+// TODO: Throw proper HTTP Error codes-exceptions
 public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger log = LoggerFactory.getLogger(KBAuthorizationInterceptor.class);
     private static final String AUTHORIZATION = "Authorization";
@@ -80,6 +81,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
 
     public KBAuthorizationInterceptor() {
         super(Phase.PRE_INVOKE);
+        KBOAuth2Handler.getInstance(); // Fail/log early
         YAML conf;
         if (!ServiceConfig.getConfig().containsKey(".config.security")) {
             log.warn("Authorization interceptor enabled, but there is no security setup in configuration at " +
@@ -228,7 +230,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
     }
 
     /**
-     * Extract the OAuth roles from the endpoint defined in the message.
+     * Extract the OAuth roles from the endpoint requested in the message.
      * This does not use any Authorization defined by the caller.
      * @param message CXF message which defined endpoint and roles.
      * @return the roles defined for the endpoint or empty list if no roles are defined.
@@ -258,6 +260,28 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         return Arrays.stream(kbOAuth.scopes())
                 .map(AuthorizationScope::scope)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * @return human readable name for the implementation class and method for the endpoint requested by the Message.
+     */
+    private String getEndpointName(Message message) {
+        final String endpointClassName = message.getExchange().getEndpoint().getEndpointInfo().getName().getLocalPart();
+
+        OperationResourceInfo ori = message.getExchange().get(OperationResourceInfo.class);
+        if (ori == null) {
+            log.warn("No OperationResourceInfo for endpoint {}. Unable to determine implementation method for the endpoint in the implementation class", endpointClassName);
+            return endpointClassName;
+        }
+
+        Method method = ori.getAnnotatedMethod();
+        if (method == null) {
+            log.warn("No Annotated method in OperationResourceInfo for endpoint. " +
+                     "Unable to determine endpoint implementation method name for implementation class {}",
+                     endpointClassName);
+            return endpointClassName;
+        }
+        return method.getName();
     }
 
     /**
@@ -317,6 +341,8 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         String realm = validateAndGetRealm(payload);
         //  "https://keycloak-keycloak.example.org/auth/realms/brugerbasen"
         String issuer = baseurl + "/" + realm;
+
+        // TODO: Switch from chained to step-by-step verification to get better error messages
 
         if (mode == MODE.OFFLINE) {
             log.info("Authorization mode is " + MODE.OFFLINE + ": Skipping realmURL, publicKey and expiration checks");
