@@ -14,105 +14,65 @@
  */
 package dk.kb.poc.webservice;
 
-import dk.kb.poc.config.ServiceConfig;
 import dk.kb.poc.webservice.exception.InternalServiceException;
-import dk.kb.util.yaml.YAML;
 import io.swagger.annotations.AuthorizationScope;
-import org.apache.commons.io.IOUtils;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.jaxrs.model.OperationResourceInfo;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
-import org.jose4j.json.internal.json_simple.JSONArray;
-import org.jose4j.json.internal.json_simple.JSONObject;
-import org.jose4j.json.internal.json_simple.parser.JSONParser;
-import org.jose4j.json.internal.json_simple.parser.ParseException;
-import org.keycloak.TokenVerifier;
 import org.keycloak.representations.AccessToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.keycloak.common.VerificationException;
 
-import javax.xml.bind.ValidationException;
-import java.io.IOException;
 import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.RSAPublicKeySpec;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Intercepts webservices endpoints where the OpenAPI generated interface is annotated with {@code @KBOAuth}.
+ * Intercepts webservices endpoints where the OpenAPI generated interface is annotated with {@link KBAuthorization}.
  *
- * The KBInterceptor requires that {@code config.security.baseurl} and {@code config.security.realms}
- * are defined in the setup.
+ * The KBInterceptor expects that {@code config.security.baseurl} and {@code config.security.realms}
+ * are defined in the setup. If not, all calls to endpoints annotated with {@link KBAuthorization} will fail.
  *
- * Example: {@code @KBOAuth(roles={"student", "public"})}
+ * Example: {@code @KBAuthorization(roles={"student", "public"})}
  * "public" is a reserved role and means that all callers can send requests to the endpoint.
- * It if up to the implementation to determine what the response can be.
+ * "student", while seemingly redundant because of "public" signals that a "student" role will give access with
+ * escalated capabilities.
+ * It is up to the implementation to determine what the response can be.
+ *
+ * NOTE: If present, authentication objects for {@link #ACCESS_TOKEN}, {@link #TOKEN_ROLES} and {@link #ENDPOINT_ROLES}
+ * are added to the message when {@link #handleMessage(Message)} is called. These can be retrieved using
  */
 // TODO: Throw proper HTTP Error codes-exceptions
 public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger log = LoggerFactory.getLogger(KBAuthorizationInterceptor.class);
     private static final String AUTHORIZATION = "Authorization";
+    private static final KBOAuth2Handler handler = KBOAuth2Handler.getInstance();
 
-    public enum MODE {OFFLINE, ENABLED}
-
-    private final MODE mode;
-    private final String baseurl;
-    private final Set<String > realms;
-    private final int keysTTL;
-    private final Map<String, PublicKey> realmKeys;
+    /**
+     * Key for storing a validated AccessToken parsed from the Message headers.
+     */
+    public static final String ACCESS_TOKEN = "AccessToken"; // AccessToken object
+    /**
+     * Key for storing the realm roles from the AccessToken.
+     */
+    public static final String TOKEN_ROLES = "TokenRoles"; // Set<String>
+    /**
+     * Key for storing the roles defined for the endpoint from the Message.
+     */
+    public static final String ENDPOINT_ROLES = "EndpointRoles"; // Set<String>
 
     public KBAuthorizationInterceptor() {
         super(Phase.PRE_INVOKE);
         KBOAuth2Handler.getInstance(); // Fail/log early
-        YAML conf;
-        if (!ServiceConfig.getConfig().containsKey(".config.security")) {
-            log.warn("Authorization interceptor enabled, but there is no security setup in configuration at " +
-                     "key .config.security");
-            conf = new YAML();
-        } else {
-            conf = ServiceConfig.getConfig().getSubMap(".config.security");
-        }
-
-        mode = MODE.valueOf(conf.getString(".mode", MODE.ENABLED.toString()).toUpperCase(Locale.ROOT));
-        if (mode == MODE.OFFLINE) {
-            log.warn("Authorization mode is {}. Access tokens will not be properly checked. " +
-                     "Set .config.security.mode to ENABLED to activate full access token validation", MODE.OFFLINE);
-        }
-
-        baseurl = trimTrailingSlash(conf.getString(".baseurl", null));
-        if (baseurl == null && mode != MODE.OFFLINE) {
-            log.warn("OAuth-enabled endpoints will fail: " +
-                     "No .config.security.baseurl defined and .config.security.mode=" + mode);
-        }
-
-        realms = new HashSet<>(conf.getList(".realms", Collections.emptyList()));
-        if (realms.isEmpty() && mode != MODE.OFFLINE) {
-            log.warn("OAuth-enabled endpoints will fail: " +
-                     "No .config.security.realms defined and .config.security.mode=" + mode);
-        }
-
-        keysTTL = conf.getInteger(".public_keys.ttl_seconds", 600);
-
-        realmKeys = new TimeMap<>(keysTTL);
-
         log.info("Created " + this);
     }
 
@@ -120,32 +80,35 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
     // message.getExchange().get(OperationResourceInfo.class)
     @Override
     public void handleMessage(Message message) throws Fault {
-        final String endpoint = message.getExchange().getEndpoint().getEndpointInfo().getName().getLocalPart();
+        final String endpoint = getEndpointName(message);
         log.debug("handleMessage({}) called", endpoint);
 
-        if (!isAnnotated(message)) {
-            log.debug("Endpoint '{}' not annotated", endpoint);
+        if (getAnnotation(message) != null) {
+            log.debug("Endpoint '{}' not annotated: No authorization required", endpoint);
             return;
         }
 
         Set<String> endpointRoles = getEndpointRoles(message);
+        message.put(ENDPOINT_ROLES, endpoint);
         if (endpointRoles.isEmpty()) {
             log.warn("No roles defined for endpoint '{}', even though it is annotated as requiring authentication",
                      endpoint);
         }
 
-        Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>)message.get(Message.PROTOCOL_HEADERS));
-        if (!headers.containsKey(AUTHORIZATION)) {
-            handleNoAuthorization(endpoint, endpointRoles);
+        String accessTokenString = getAccessTokenString(message);
+        if (accessTokenString == null) {
+            handler.handleNoAuthorization(endpoint, endpointRoles);
             return;
         }
-        
+
         // If authorization is defined we validate it, even if one of the endpoint roles is 'public'
         // TODO: Inject the Authorization token in the context of the call (put it in the Message)
         // TODO: Mark the Message as authenticated
         try {
             AccessToken accessToken = validateAuthorization(message);
-            validateRoles(endpoint, accessToken, endpointRoles);
+            message.put(ACCESS_TOKEN, accessToken);
+            message.put(TOKEN_ROLES, handler.getTokenRoles(accessToken));
+            handler.validateRoles(endpoint, accessToken, endpointRoles);
         } catch (VerificationException e) {
             log.warn("VerificationException validating authorization", e);
             throw new Fault(e);
@@ -155,78 +118,22 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         }
     }
 
-    private boolean isAnnotated(Message message) {
+    /**
+     * If defined, get the {@link KBAuthorization} from the endpoint stated in the message.
+     * @param message CXF Message with the endpoint.
+     * @return the authorization annotation for the endpoint or null if not annotated.
+     */
+    private KBAuthorization getAnnotation(Message message) {
         OperationResourceInfo ori = message.getExchange().get(OperationResourceInfo.class);
         if (ori == null) {
-            return false;
+            return null;
         }
         Method method = ori.getAnnotatedMethod();
         if (method == null) {
-            return false;
+            return null;
         }
 
-        return method.getDeclaredAnnotation(KBAuthorization.class) != null;
-    }
-
-    /**
-     * Checks that the roles stated in the accessToken conforms to the endpointRoles.
-     * @param endpoint name of the endpoint. Used for exceptions and logging.
-     * @param accessToken   a trusted (validated) access token.
-     * @param endpointRoles the roles for the endpoint.
-     * @throws VerificationException if access is not to be granted.
-     */
-    private void validateRoles(String endpoint, AccessToken accessToken, Set<String> endpointRoles)
-            throws VerificationException {
-        if (endpointRoles.contains(KBAuthorization.PUBLIC)) {
-            log.debug("Granting access to endpoint '{}' as endpoint roles included '{}'",
-                      endpoint, KBAuthorization.PUBLIC);
-            return;
-        }
-
-        Set<String> realmRoles = accessToken.getRealmAccess().getRoles();
-        log.debug("got roles {} from access token for endpoint {}", realmRoles, endpoint);
-        if (endpointRoles.contains(KBAuthorization.ANY) && !realmRoles.isEmpty()) {
-            log.debug("Granting access to endpoint '{}' as endpoint roles included '{}' and realm role count was {}",
-                      endpoint, KBAuthorization.PUBLIC, realmRoles.size());
-            return;
-        }
-
-        for (String realmRole: realmRoles) {
-            if (endpointRoles.contains(realmRole)) {
-                log.debug("Granting access to endpoint '{}' as realm role '{}' was present in endpoint roles",
-                          endpoint, realmRole);
-                return;
-            }
-        }
-        throw new VerificationException(String.format(
-                Locale.ROOT,"Unable to match a realm role from %s to the endpoint roles %s for endpoint '%s'",
-                realmRoles, endpointRoles, endpoint));
-    }
-
-    /**
-     * No authorization header. Either throw an exception or accept entry if the endpoint is marked as public.
-     * @param endpoint name of the endpoint. Used for exceptions and logging.
-     * @param endpointRoles the roles for the endpoint. If {@code public} is one of the roles, access is granted.
-     */
-    private void handleNoAuthorization(String endpoint, Set<String> endpointRoles) {
-        switch (mode) {
-            case OFFLINE:
-                log.debug("Authorization skipped for endpoint '{}' as mode={}", endpoint, mode);
-                break;
-            case ENABLED:
-                if (endpointRoles.contains(KBAuthorization.PUBLIC)) {
-                    log.debug("No Authorization defined in request but endpoint '{}' roles included '{}'",
-                              endpoint, KBAuthorization.PUBLIC);
-                    break;
-                }
-                throw new Fault(new ValidationException(
-                        "Authorization failed as there were no Authorization defined in request and endpoint " +
-                        endpoint + " requires it to be present with roles " + endpointRoles));
-            default: {
-                log.error("Unknown authorization mode: " + mode);
-                throw new Fault(new InternalServiceException("Unknown authorization mode" + mode));
-            }
-        }
+        return method.getDeclaredAnnotation(KBAuthorization.class);
     }
 
     /**
@@ -311,207 +218,39 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
             throw new VerificationException("Unsupported authorization String (no space)");
         }
 
-        return validateAuthorization(parts[1]);
+        return handler.validateAuthorization(parts[1]);
     }
 
     /**
-     * Validate that the accessTokenString has allowed baseurl and realm, that is is not expired etc.
-     * This does not check if the roles for the caller matches the roles for the endpoint.
-     * @param encodedAccessToken Base64-encoded JSON, in multiple parts split by {@code .}.
-     * @throws VerificationException if the authorization validation failed.
-     * @return the validated AccessToken.
+     * Scans the {@link #AUTHORIZATION} headers for an entry with the pattern {@code "Bearer .*"} and returns the
+     * part after {@code "Bearer "}, if present. This part should be a base64 representation of a JSON access token.
+     * @param message CXF message with Authorization information.
+     * @return a base64 representation of the JSON Bearer access token. Or null if not present.
      */
-    public AccessToken validateAuthorization(String encodedAccessToken) throws VerificationException {
-        String[] tokenParts = encodedAccessToken.split("[.]");
-        if (tokenParts.length < 2) {
-            log.warn("Received encodedAccessToken string without a dot: '{}'", encodedAccessToken);
-            throw new VerificationException("Unsupported access token (no dot)");
+    private String getAccessTokenString(Message message) {
+        Map<String, List<String>> headers = CastUtils.cast((Map<?, ?>)message.get(Message.PROTOCOL_HEADERS));
+        if (headers == null) {
+            throw new InternalServiceException("Unable to extract protocol headers");
         }
 
-        JSONObject header = decodeJSONObject(tokenParts[0]);
-        JSONObject payload = decodeJSONObject(tokenParts[1]);
-
-        if (!header.containsKey("kid")) {
-            throw new VerificationException("No key ID (kid) present in access token header");
+        List<String> authHeaders = headers.get(AUTHORIZATION);
+        if (authHeaders == null) {
+            return null;
         }
-        if (!payload.containsKey("iss")) {
-            throw new VerificationException("No issuer (iss) present in access token payload");
-        }
-        String kid = header.get("kid").toString();
-        String realm = validateAndGetRealm(payload);
-        //  "https://keycloak-keycloak.example.org/auth/realms/brugerbasen"
-        String issuer = baseurl + "/" + realm;
 
-        // TODO: Switch from chained to step-by-step verification to get better error messages
-
-        if (mode == MODE.OFFLINE) {
-            log.info("Authorization mode is " + MODE.OFFLINE + ": Skipping realmURL, publicKey and expiration checks");
-            return TokenVerifier.create(encodedAccessToken, AccessToken.class)
-//                    .withChecks(new TokenVerifier.RealmUrlCheck(issuer)) // String match only
-                    .verify()
-                    .getToken();
+        String authorizationString = authHeaders.stream()
+                .filter(value -> value.startsWith("Bearer "))
+                .findFirst().orElse(null);
+        if (authorizationString == null || authorizationString.isBlank()) {
+            return null;
         }
-        // TODO: Figure out why there is a "Unchecked generics array creation" warning here and fix it
-        return TokenVerifier.create(encodedAccessToken, AccessToken.class)
-                .withChecks(new TokenVerifier.RealmUrlCheck(issuer)) // String match only
-                .withChecks(new TokenVerifier.Predicate<AccessToken>() {
-                    @Override
-                    public boolean test(AccessToken accessToken) throws VerificationException {
-                        return !accessToken.isExpired();
-                    }
-                })
-                .publicKey(getRealmKey(realm, kid))
-                // TODO: Check issuedAt is before now (sanity check / problemer med ur)
-                .verify()
-                .getToken();
+
+        return authorizationString.split(" ", 2)[1];
     }
 
-    /**
-     * Extracts the realm from the issuer (iss) and verifies that it is on the list of accepted realms.
-     * @param payload from an access token.
-     * @return the realm, if present and accepted.
-     * @throws VerificationException if the realm cannot be verified.
-     */
-    private String validateAndGetRealm(JSONObject payload) throws VerificationException {
-        String issuer = payload.get("iss").toString();
-        Matcher issuerMatcher = ISSUER.matcher(issuer);
-        if (!issuerMatcher.matches()) {
-            String error = "Unable to determine realm from token payload iss '" + issuer + "'";
-            log.warn(error);
-            throw new VerificationException(error);
-        }
-        String tokenRealm = issuerMatcher.group(2);
-        if (!realms.contains(tokenRealm)) {
-            String error = String.format(
-                    Locale.ROOT, "The provided realm '%s' from iss '%s' was not on the list of allowed realms",
-                    tokenRealm, issuer);
-            log.warn(error + " " + realms);
-            throw new VerificationException(error);
-        }
-        return tokenRealm;
-    }
-
-    private static Pattern ISSUER = Pattern.compile("^(.*)/(.+)/?$");
-
-    private JSONObject decodeJSONObject(String base64JSON) throws VerificationException {
-        String jsonString = new String(base64Decode(base64JSON), StandardCharsets.UTF_8);
-        JSONParser parser = new JSONParser();
-        // TODO: Switch to org.json
-        try {
-            return (JSONObject) parser.parse(jsonString);
-        } catch (ParseException e) {
-            log.warn("Unable to parse JSON in access token '{}'", jsonString);
-            throw new VerificationException("Unable to parse JSON in access token");
-        }
-    }
-
-    // The Base64 strings that come from a JWKS need some manipulation before they can be decoded.
-     // we do that here
-     public byte[] base64Decode(String base64) {
-         base64 = base64.replaceAll("-", "+");
-         base64 = base64.replaceAll("_", "/");
-         switch (base64.length() % 4) // Pad with trailing '='s
-         {
-             case 0:
-                 break; // No pad chars in this case
-             case 2:
-                 base64 += "==";
-                 break; // Two pad chars
-             case 3:
-                 base64 += "=";
-                 break; // One pad char
-             default:
-                 throw new RuntimeException(
-                         "Illegal base64url string!");
-         }
-         return Base64.getDecoder().decode(base64);
-     }
-
-    /**
-     * Retrieved the key with the given kid from the given realm. Keys are cached, with Time to Live specified in
-     * the configuration.
-     * @param realm a Keycloak realm under the configured {@link #baseurl}.
-     * @param kid the ID of the key to use for the realm.
-     * @return the public key for the kid or null if it cannot be retrieved.
-     */
-     public PublicKey getRealmKey(String realm, String kid) throws VerificationException {
-         final String cacheKey = realm + ":" + kid;
-         PublicKey publicKey = realmKeys.get(cacheKey);
-         if (publicKey != null) {
-             return publicKey;
-         }
-
-         log.info("Retrieving public key for kid='{}' in realm '{}'", kid, realm);
-         try {
-         // https://keycloak-keycloak.apps.someopenshiftserver.example.org/auth/realms/brugerbasen/protocol/openid-connect/certs
-             URL publicKeyURL = new URL(baseurl + "/" + realm + "/protocol/openid-connect/certs");
-             log.debug("getRealmKey: Reading content of '{}'", publicKeyURL);
-             String publicKeysString = IOUtils.toString(publicKeyURL, StandardCharsets.UTF_8);
-             publicKey = extractPublicKey(kid, publicKeysString);
-             realmKeys.put(cacheKey, publicKey);
-         } catch (IOException e) {
-             log.warn("Could not get public key for kid " + kid + " in realm " + realm, e);
-             throw new VerificationException("Could not get public key for kid " + kid + " in realm " + realm, e);
-         }
-         return publicKey;
-     }
-
-    // TODO: Add caching
-    public PublicKey getPublicKey(String kid) throws VerificationException {
-        try {
-            String publicKeysString = IOUtils.toString(new URL("https://keycloak-keycloak.apps.ocp-test.kb.dk/auth/realms/brugerbasen/protocol/openid-connect/certs"), StandardCharsets.UTF_8);
-            return extractPublicKey(kid, publicKeysString);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not get public key for kid" + kid);
-        }
-    }
-
-    // TODO: Clean this up
-    private PublicKey extractPublicKey(String kid, String response) throws VerificationException {
-        try {
-            String modulusStr = null;
-            String exponentStr = null;
-            JSONParser parser = new JSONParser();
-            JSONObject json = (JSONObject) parser.parse(response);
-            // extract the kid value from the header
-            JSONArray keylist = (JSONArray) json.get("keys");
-            for (Object keyObject : keylist) {
-                JSONObject key = (JSONObject) keyObject;
-                String id = (String) key.get("kid");
-//                System.out.println("kid in response: " + id);
-                if (kid.equals(id)) {
-                    modulusStr = (String) key.get("n");
-                    exponentStr = (String) key.get("e");
-                }
-            }
-
-            if (modulusStr == null || exponentStr == null) {
-                throw new VerificationException("kid was either not found or lacked n or e");
-            }
-            BigInteger modulus = new BigInteger(1, base64Decode(modulusStr));
-            BigInteger publicExponent = new BigInteger(1, base64Decode(exponentStr));
-
-            try {
-                // TODO: This should probably not be hardcoded. Fetch from keycloak instead
-                KeyFactory kf = KeyFactory.getInstance("RSA");
-                return kf.generatePublic(new RSAPublicKeySpec(modulus, publicExponent));
-            } catch (Exception e) {
-                throw new VerificationException(e);
-            }
-        // TODO: Kill this abomination
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        throw new VerificationException("kid could not be extracted from the certs file");
-    }
-
-    private String trimTrailingSlash(String s) {
-        return s == null || !s.endsWith("/") ? s : s.substring(0, s.length()-1);
-    }
 
     public String toString() {
-        return String.format(Locale.ROOT, "KBInterceptor(mode=%s, baseurl='%s', realms=%s, keysTTL=%ss)",
-                             mode, baseurl, realms, keysTTL);
+        return String.format(Locale.ROOT, "KBInterceptor(handler=%s)", handler);
     }
 
 }

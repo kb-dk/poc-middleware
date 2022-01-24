@@ -1,0 +1,31 @@
+#
+# This config contains environment-data: Servers, usernames, passwords etc.
+# If will be automatically merged with the core config when accesses through the application config system.
+#
+# The environment config is normally controlled by operations and is not part of the code repository.
+#
+config:
+  backend:
+    # The URL for the backend service
+    # Sample: http://localhost:9060/poc-backend/v1
+    url: 'http://localhost:9060/poc-backend/v1'
+
+  security:
+    # The security mode. Valid values are
+    # OFFLINE: No validation of security tokens: All requests are accepted.
+    # ENABLED (or no mode set): Validation of security tokens.
+    mode: 'ENABLED'
+    baseurl: 'http://localhost:8085/auth/realms'
+    realms:
+      - test-realm
+    public_keys:
+      # The number of seconds that public keys from the realms are cached
+      # Optional, -1 means forever.
+      # Default is 600 (10 minutes)
+      ttl_seconds: 86400
+
+    # Below only used for getting tokens
+    client_id: 'test' # Matches Keycloak Client ID
+    # Used for application<->application (service account: client_id + secret)
+    # Or for client->application (client fetches a token)
+    client_secret: '7eec0aeb-1ae8-4074-801b-270ad79fbc48'
