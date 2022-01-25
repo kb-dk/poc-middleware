@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sbforge</groupId>
@@ -215,13 +216,13 @@
         </dependency>
         <!-- To get date parsing to work? -->
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-modules-java8 -->
-<!--        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-modules-java8</artifactId>
-            <version>2.13.1</version>
-            <type>pom</type>
-            <scope>runtime</scope>
-        </dependency>-->
+        <!--        <dependency>
+                    <groupId>com.fasterxml.jackson.module</groupId>
+                    <artifactId>jackson-modules-java8</artifactId>
+                    <version>2.13.1</version>
+                    <type>pom</type>
+                    <scope>runtime</scope>
+                </dependency>-->
         <!-- To get client generation to work -->
         <!-- https://mvnrepository.com/artifact/org.openapitools/openapi-generator -->
         <dependency>
@@ -321,9 +322,9 @@
             <version>2.10.1</version>
         </dependency>-->
         <dependency>
-          <groupId>org.bitbucket.b_c</groupId>
-          <artifactId>jose4j</artifactId>
-          <version>0.7.9</version>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
+            <version>0.7.9</version>
         </dependency>
         <dependency>
             <groupId>org.keycloak</groupId>
@@ -399,7 +400,8 @@
                      which seems to be an unresolved issue: https://github.com/OpenAPITools/openapi-generator/issues/9008 -->
                 <configuration>
                     <generatorName>jaxrs-cxf-extended</generatorName>
-                    <inputSpec>${project.build.outputDirectory}/openapi.yaml</inputSpec><!-- Will always be overridden -->
+                    <inputSpec>${project.build.outputDirectory}/openapi.yaml
+                    </inputSpec><!-- Will always be overridden -->
                     <modelNameSuffix>Dto</modelNameSuffix>
                     <generateSupportingFiles>false</generateSupportingFiles>
                     <generateApiTests>false</generateApiTests>
@@ -448,8 +450,8 @@
                         <configuration>
                             <inputSpec>${project.build.outputDirectory}/openapi_v1.yaml</inputSpec>
                             <ignoreFileOverride>${project.basedir}/.openapi-codegen-ignore-api</ignoreFileOverride>
-<!--                            <generatorName>spring</generatorName>
-                            <templateDirectory>src/main/</templateDirectory>-->
+                            <!--                            <generatorName>spring</generatorName>
+                                                        <templateDirectory>src/main/</templateDirectory>-->
 
                             <configOptions>
                                 <apiPackage>${project.package}.api.v1</apiPackage>
@@ -492,14 +494,23 @@
                             <goal>generate</goal>
                         </goals>
                         <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi/poc-backend-openapi_v1.yaml</inputSpec>
-                            <ignoreFileOverride>${project.basedir}/.openapi-backend-codegen-ignore-api</ignoreFileOverride>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/poc-backend-openapi_v1.yaml
+                            </inputSpec>
+                            <ignoreFileOverride>${project.basedir}/.openapi-backend-codegen-ignore-api
+                            </ignoreFileOverride>
                             <generatorName>java</generatorName>
                             <library>native</library>
+
+                            <!-- Ensure ONLY the ApiClient and supporting classes are created, not the gradle mess-->
                             <generateSupportingFiles>true</generateSupportingFiles>
+                            <supportingFilesToGenerate>ApiClient.java,ApiException.java,Configuration.java,Pair.java
+                            </supportingFilesToGenerate>
+
+
                             <!-- Do NOT use the customised templates as they are only for the webservice part, not the client-->
                             <!-- Hacked by Asger by setting to an existing folder without templates -->
                             <templateDirectory>src/main/</templateDirectory>
+
                             <configOptions>
                                 <apiPackage>${project.package}.backend.api.v1</apiPackage>
                                 <modelPackage>${project.package}.backend.model.v1</modelPackage>
