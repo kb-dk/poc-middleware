@@ -501,6 +501,12 @@
                             <generatorName>java</generatorName>
                             <library>native</library>
 
+                            <!-- Do not generate doc or tests for this client, we will handle this ourselves-->
+                            <generateApiTests>false</generateApiTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelTests>false</generateModelTests>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+
                             <!-- Ensure ONLY the ApiClient and supporting classes are created, not the gradle mess-->
                             <generateSupportingFiles>true</generateSupportingFiles>
                             <supportingFilesToGenerate>ApiClient.java,ApiException.java,Configuration.java,Pair.java

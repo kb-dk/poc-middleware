@@ -1,27 +1,28 @@
-.idea/
-*.ipr
-*.iws
-*.iml
 
+# These config files should NEVER be in git, as they can contain passwords
+*-environment.yaml
+*-local.yaml
 
+# Ignore everything relating to gradle, we use maven
+gradle/
+.gradle
+build
+
+# compiled files
 *.class
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Package Files
 *.jar
 *.war
 *.ear
 
-# exclude jar for gradle wrapper
-#!gradle/wrapper/*.jar
+# build files
+**/target/
+target/
+
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
-
-# build files
-**/target
-target
-.gradle
-build
