@@ -91,8 +91,13 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         Set<String> endpointRoles = getEndpointRoles(message);
         message.put(ENDPOINT_ROLES, endpoint);
         if (endpointRoles.isEmpty()) {
-            log.warn("No roles defined for endpoint '{}', even though it is annotated as requiring authentication",
-                     endpoint);
+            if ("getResource".equals(endpoint)) {
+                log.debug("No roles defined for endpoint '{}'. This is expected as getResource is a meta endpoint",
+                          endpoint);
+            } else {
+                log.warn("No roles defined for endpoint '{}', even though it is annotated as requiring authentication",
+                         endpoint);
+            }
         }
 
         String accessTokenString = getAccessTokenString(message);
@@ -143,7 +148,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
      * @return the roles defined for the endpoint or empty list if no roles are defined.
      */
     private Set<String> getEndpointRoles(Message message) {
-        final String endpoint = message.getExchange().getEndpoint().getEndpointInfo().getName().getLocalPart();
+        final String endpoint = getEndpointName(message);
 
         OperationResourceInfo ori = message.getExchange().get(OperationResourceInfo.class);
         if (ori == null) {
@@ -160,8 +165,8 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
 
         KBAuthorization kbOAuth = method.getDeclaredAnnotation(KBAuthorization.class);
         if (kbOAuth == null) {
-            log.warn("No KBOAuth annotation for endpoint {} in OperationResourceInfo. " +
-                     "Unable to determine required roles", endpoint);
+            log.debug("No KBOAuth annotation for endpoint {} in OperationResourceInfo. " +
+                      "Unable to determine required roles", endpoint);
             return Collections.emptySet();
         }
         return Arrays.stream(kbOAuth.scopes())
