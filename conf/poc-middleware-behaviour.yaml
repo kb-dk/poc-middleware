@@ -31,9 +31,12 @@ config:
   security:
     # The security mode. Valid values are
     # OFFLINE: No validation of security tokens: All requests are accepted.
-    # ENABLED (or no mode set): Validation of security tokens.
+    # ENABLED (or no mode set): Validation of security tokens against OAuth2 server.
     mode: 'ENABLED'
+    # The OAUth2 server base url, typically ending in "realms"
+    # Sample: https://keycloak-keycloak.example.org/auth/realms
     baseurl: 'https://keycloak-keycloak.example.org/auth/realms'
+    # Accepted realms for requests. These must be present at the OAuth2 server
     realms:
       - developers
       - test
@@ -45,8 +48,10 @@ config:
       # Default is 600 (10 minutes)
       ttl_seconds: 86400
 
-    # Below only used for getting tokens
-    client_id: 'test' # Matches Keycloak Client ID
-    # Used for application<->application (service account: client_id + secret)
-    # Or for client->application (client fetches a token)
-    client_secret: '8ebc0aeb-1ae8-4474-851b-270ae79fdc11'
+    # Client settings are used if the webapp needs to request tokens from the OAuth2 server
+    client:
+      # Matches OAuth2 server Client ID
+      id: 'test'
+      # Used for application<->application (service account: client_id + secret)
+      # Or for client->application (client fetches a token)
+      secret: '8ebc0aeb-1ae8-4474-851b-270ae79fdc11'

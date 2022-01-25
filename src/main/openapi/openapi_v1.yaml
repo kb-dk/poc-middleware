@@ -50,7 +50,7 @@ paths:
       summary: 'Retrieve status for the well being of the server, with granularity determined by role.'
       operationId: status
       security:
-        - oAuthSample:
+        - KBOAuth:
           - public
       responses:
         '200':
@@ -67,7 +67,7 @@ paths:
       summary: 'Retrieve the number of books. Requires authorization as it is secret and the result relies in complex internal need-to-know-basis rules'
       operationId: getBookCount
       security:
-        - oAuthSample:
+        - KBOAuth:
           - any
       responses:
         '200':
@@ -96,7 +96,7 @@ paths:
             minLength: 1
             example: 'book_id87'
       security:
-        - oAuthSample:
+        - KBOAuth:
           - read
       responses:
         '200':
@@ -128,7 +128,7 @@ paths:
             minLength: 1
             example: 'book_id87'
       security:
-        - oAuthSample:
+        - KBOAuth:
           - write
       responses:
         '200':
@@ -161,7 +161,7 @@ paths:
       summary: 'Add or update a single book'
       operationId: addBook
       security:
-        - oAuthSample:
+        - KBOAuth:
           - write
       responses:
          '200':
@@ -230,7 +230,7 @@ paths:
             enum:  ['JSONL', 'JSON', 'CSV']
             example: 'JSONL'
       security:
-        - oAuthSample:
+        - KBOAuth:
           - read
       responses:
         '200':
@@ -260,17 +260,24 @@ components:
 
   securitySchemes:
 
-    oAuthSample:    # <---- arbitrary name
+    KBOAuth:
       type: oauth2
-      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      description: 'This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)'
       flows:
         implicit:   # <---- OAuth flow(authorizationCode, implicit, password or clientCredentials)
-          authorizationUrl: https://api.example.com/oauth2/authorize
+          authorizationUrl: https://api.example.com/oauth2/authorize # Overridden by the configuration
           scopes:
+            # Project specific roles
             read: 'read data'
             write: 'modify or delete data'
-            public: 'allowed for all, authorization optional'
-            any: 'allowed for all, but the caller must have an access token'
+
+            # General roles at the Royal Danish Library
+            devel: 'broad read access'
+            admin: 'all rights'
+
+            # Meta role controlling authorization behaviour
+            public: 'allowed for all, authorization optional, implementation behaviour depending on caller roles'
+            any: 'allowed for all, authorization mandatory, implementation behaviour depending on caller roles'
 
   schemas:
 
