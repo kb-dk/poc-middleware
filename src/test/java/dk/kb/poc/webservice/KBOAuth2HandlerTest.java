@@ -29,6 +29,11 @@ import static org.junit.jupiter.api.Assertions.*;
  *  limitations under the License.
  *
  */
+
+/**
+ * This test class uses hardcoded public keys, access tokens etc. It does not require a running and/or mocked OAuth
+ * server. This (unfortunately) also means that not all code paths are tested.
+ */
 class KBOAuth2HandlerTest {
     // Three parts devided by dots: header, payload and signature
     public static final String SAMPLE_ACCESS_TOKEN_1 =
@@ -48,17 +53,29 @@ class KBOAuth2HandlerTest {
             "2jXSld4z6JEAkdGiJg7tIwLAVWYPTprKUN_6yKlPIqjtQRO8QGbshPqL_occTkV2n4ogHznWfVc32U6OmV_TSGqYryf-WMX9nBugnoUL" +
             "Igi00U3usUloJ_P9XuCg9181SItc6w";
 
-    public static final String SAMPLE_PUBLIC_KEY_1 = "{\n" +
+    public static final String SAMPLE_PUBLIC_KEY_1 =
+            "{\n" +
             "    \"keys\": [\n" +
             "        {\n" +
             "            \"kid\": \"tp5q1nwnzJLF9WeLlGEScsaqZH4-TkzpQp7I457XZ8c\",\n" +
             "            \"kty\": \"RSA\",\n" +
             "            \"alg\": \"RS256\",\n" +
             "            \"use\": \"sig\",\n" +
-            "            \"n\": \"qk6RFnWLZvuR7TnYkL5htIwO_P9xNPOGseKSiKCs0DMky4tAsjbEjqZHVDNSDeecXlIaNsRV3F0UaOagXWRmaaU9U5b1DrgOgTR1tRypW4wqEYnczW2etLUHKx_GqMbXoIiVZillMTl3JLFkWIumRBMJSSXLE3ROSzBlqydzTJifyIWJ26-E6FI9aO2hpJHk7EuMs22EKwqGgsXB5ZUaEapqv7K2NNfPEquRviNa-igKwCZkANY54dI9E6asKjWWCLJWF_7ltfw08SotW3MugOd7si4MCM7NegYJOipWq03Jj_6nQx-n78EL6F2IXzy_WBzbRpr39AmqROwiU4jEiQ\",\n" +
+            "            \"n\": \"qk6RFnWLZvuR7TnYkL5htIwO_P9xNPOGseKSiKCs0DMky4tAsjbEjqZHVDNSDeecXlIaNsRV3F0UaOagXWR" +
+            "maaU9U5b1DrgOgTR1tRypW4wqEYnczW2etLUHKx_GqMbXoIiVZillMTl3JLFkWIumRBMJSSXLE3ROSzBlqydzTJifyIWJ26-E6FI9aO2" +
+            "hpJHk7EuMs22EKwqGgsXB5ZUaEapqv7K2NNfPEquRviNa-igKwCZkANY54dI9E6asKjWWCLJWF_7ltfw08SotW3MugOd7si4MCM7NegY" +
+            "JOipWq03Jj_6nQx-n78EL6F2IXzy_WBzbRpr39AmqROwiU4jEiQ\",\n" +
             "            \"e\": \"AQAB\",\n" +
             "            \"x5c\": [\n" +
-            "                \"MIICozCCAYsCBgF+ZPDSVjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0ZXN0LXJlYWxtMB4XDTIyMDExNjIyMDgzMVoXDTMyMDExNjIyMTAxMVowFTETMBEGA1UEAwwKdGVzdC1yZWFsbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKpOkRZ1i2b7ke052JC+YbSMDvz/cTTzhrHikoigrNAzJMuLQLI2xI6mR1QzUg3nnF5SGjbEVdxdFGjmoF1kZmmlPVOW9Q64DoE0dbUcqVuMKhGJ3M1tnrS1BysfxqjG16CIlWYpZTE5dySxZFiLpkQTCUklyxN0TkswZasnc0yYn8iFiduvhOhSPWjtoaSR5OxLjLNthCsKhoLFweWVGhGqar+ytjTXzxKrkb4jWvooCsAmZADWOeHSPROmrCo1lgiyVhf+5bX8NPEqLVtzLoDne7IuDAjOzXoGCToqVqtNyY/+p0Mfp+/BC+hdiF88v1gc20aa9/QJqkTsIlOIxIkCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAJFpPa66cuqt/0aYn1vFKm2Dlnp9Ys/EgX54B+/vsY2/lqrSfMQUhQSAqtuZue+Hfew/NWjLBI0qK0AZstFn7yanw48FUx6+Wa+X7DyBO1wyluUg4iKV+MQ2GPy6/u9Xwd/Lovh7YvlEh4J6/SWKfGOtZas2OaWc9IoBHm/f/CgkKdS9TvhQ+GB1bc95Sa/sUUWsptmV8G6HC+rAeeUrQp872cDoDd9dApDXQOCiyQMKXQCRpOSFRBI6GJpQapa+gwyUnDKYYX+RnabaNrXII2x3rVTlr0D7cDcbFGg6KZut71x1K4307bRWlHR4hxnPm3zfsyNJj7xsItIeUZmscLA==\"\n" +
+            "                \"MIICozCCAYsCBgF+ZPDSVjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0ZXN0LXJlYWxtMB4XDTIyMDExNj" +
+            "IyMDgzMVoXDTMyMDExNjIyMTAxMVowFTETMBEGA1UEAwwKdGVzdC1yZWFsbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAK" +
+            "pOkRZ1i2b7ke052JC+YbSMDvz/cTTzhrHikoigrNAzJMuLQLI2xI6mR1QzUg3nnF5SGjbEVdxdFGjmoF1kZmmlPVOW9Q64DoE0dbUcqV" +
+            "uMKhGJ3M1tnrS1BysfxqjG16CIlWYpZTE5dySxZFiLpkQTCUklyxN0TkswZasnc0yYn8iFiduvhOhSPWjtoaSR5OxLjLNthCsKhoLFwe" +
+            "WVGhGqar+ytjTXzxKrkb4jWvooCsAmZADWOeHSPROmrCo1lgiyVhf+5bX8NPEqLVtzLoDne7IuDAjOzXoGCToqVqtNyY/+p0Mfp+/BC+" +
+            "hdiF88v1gc20aa9/QJqkTsIlOIxIkCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAJFpPa66cuqt/0aYn1vFKm2Dlnp9Ys/EgX54B+/vsY2" +
+            "/lqrSfMQUhQSAqtuZue+Hfew/NWjLBI0qK0AZstFn7yanw48FUx6+Wa+X7DyBO1wyluUg4iKV+MQ2GPy6/u9Xwd/Lovh7YvlEh4J6/SW" +
+            "KfGOtZas2OaWc9IoBHm/f/CgkKdS9TvhQ+GB1bc95Sa/sUUWsptmV8G6HC+rAeeUrQp872cDoDd9dApDXQOCiyQMKXQCRpOSFRBI6GJp" +
+            "Qapa+gwyUnDKYYX+RnabaNrXII2x3rVTlr0D7cDcbFGg6KZut71x1K4307bRWlHR4hxnPm3zfsyNJj7xsItIeUZmscLA==\"\n" +
             "            ],\n" +
             "            \"x5t\": \"jEvSSTBm7Z7Nc65It88wIkWm5PI\",\n" +
             "            \"x5t#S256\": \"o4D4kbhXaAQ-Uxof1OaozkBiwIsIu0gGWzhiPXUvFIE\"\n" +
@@ -68,10 +85,21 @@ class KBOAuth2HandlerTest {
             "            \"kty\": \"RSA\",\n" +
             "            \"alg\": \"RSA-OAEP\",\n" +
             "            \"use\": \"enc\",\n" +
-            "            \"n\": \"y41bWV2B59V1h8mzaQ7bpn5FxepkkDAW27VrX89yqlyMLuqyn_FKvDi_eACQEjtLktcFBQ6Foax5etS85JzPfmAdcdbS3YMaYd0HLMgiG00mclZdxm0F8yHUhW7JEdT2RU3mLfbJeVss8wNBcShOhAgJf1yKfspOEtFzRJaV8Azs47hUUD11E2eviIjFCj-IhypzfZcoF2Amqt13HEfWRIDhclpvASyZpcV1OcQdhWm08mAcMaxi-KmUds0JxCytSaJKdUViN9IvN-ZRQwnP4UHgfOlF1JoA-YfkW_o1xggj6WTudRgEdDrPF6T56EnmWUnb6Rba0mgMdX-8Catezw\",\n" +
+            "            \"n\": \"y41bWV2B59V1h8mzaQ7bpn5FxepkkDAW27VrX89yqlyMLuqyn_FKvDi_eACQEjtLktcFBQ6Foax5etS85Jz" +
+            "PfmAdcdbS3YMaYd0HLMgiG00mclZdxm0F8yHUhW7JEdT2RU3mLfbJeVss8wNBcShOhAgJf1yKfspOEtFzRJaV8Azs47hUUD11E2eviIj" +
+            "FCj-IhypzfZcoF2Amqt13HEfWRIDhclpvASyZpcV1OcQdhWm08mAcMaxi-KmUds0JxCytSaJKdUViN9IvN-ZRQwnP4UHgfOlF1JoA-Yf" +
+            "kW_o1xggj6WTudRgEdDrPF6T56EnmWUnb6Rba0mgMdX-8Catezw\",\n" +
             "            \"e\": \"AQAB\",\n" +
             "            \"x5c\": [\n" +
-            "                \"MIICozCCAYsCBgF+ZPDSgjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0ZXN0LXJlYWxtMB4XDTIyMDExNjIyMDgzMVoXDTMyMDExNjIyMTAxMVowFTETMBEGA1UEAwwKdGVzdC1yZWFsbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMuNW1ldgefVdYfJs2kO26Z+RcXqZJAwFtu1a1/PcqpcjC7qsp/xSrw4v3gAkBI7S5LXBQUOhaGseXrUvOScz35gHXHW0t2DGmHdByzIIhtNJnJWXcZtBfMh1IVuyRHU9kVN5i32yXlbLPMDQXEoToQICX9cin7KThLRc0SWlfAM7OO4VFA9dRNnr4iIxQo/iIcqc32XKBdgJqrddxxH1kSA4XJabwEsmaXFdTnEHYVptPJgHDGsYviplHbNCcQsrUmiSnVFYjfSLzfmUUMJz+FB4HzpRdSaAPmH5Fv6NcYII+lk7nUYBHQ6zxek+ehJ5llJ2+kW2tJoDHV/vAmrXs8CAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAEUat2mHhcPNRPkYvWOWQcZjAiYrwggZRNRDXcb1k7s5q725XOLZVChxeRoViXf/U3/Y/Mq25tOdTGX8QN0Lb28upKLmM/BjT9V0JpnS+JFUWAmCLNoW2vNO09fvc7X5yRmKmdHC28plZfH6Pb9S//0SrhgQ5fNkQlU2k6a5IlmtIrbDtZr7v4ubKD+g929ao7C/4qDDRYx6AGxmFNaZsjRdwiMFDvMYodL+teQyGQQkiVyGdyFj/ghKocVbAJh2fw5MS13tJMucCjSCQF2Jx7cxiJgJEBJDRy6HJpRfhJBHyQm/yoddV9/GK0CdfQgRA1/bGMCFomzir+ommOqFXTA==\"\n" +
+            "                \"MIICozCCAYsCBgF+ZPDSgjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0ZXN0LXJlYWxtMB4XDTIyMDExNj" +
+            "IyMDgzMVoXDTMyMDExNjIyMTAxMVowFTETMBEGA1UEAwwKdGVzdC1yZWFsbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAM" +
+            "uNW1ldgefVdYfJs2kO26Z+RcXqZJAwFtu1a1/PcqpcjC7qsp/xSrw4v3gAkBI7S5LXBQUOhaGseXrUvOScz35gHXHW0t2DGmHdByzIIh" +
+            "tNJnJWXcZtBfMh1IVuyRHU9kVN5i32yXlbLPMDQXEoToQICX9cin7KThLRc0SWlfAM7OO4VFA9dRNnr4iIxQo/iIcqc32XKBdgJqrddx" +
+            "xH1kSA4XJabwEsmaXFdTnEHYVptPJgHDGsYviplHbNCcQsrUmiSnVFYjfSLzfmUUMJz+FB4HzpRdSaAPmH5Fv6NcYII+lk7nUYBHQ6zx" +
+            "ek+ehJ5llJ2+kW2tJoDHV/vAmrXs8CAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAEUat2mHhcPNRPkYvWOWQcZjAiYrwggZRNRDXcb1k7s" +
+            "5q725XOLZVChxeRoViXf/U3/Y/Mq25tOdTGX8QN0Lb28upKLmM/BjT9V0JpnS+JFUWAmCLNoW2vNO09fvc7X5yRmKmdHC28plZfH6Pb9" +
+            "S//0SrhgQ5fNkQlU2k6a5IlmtIrbDtZr7v4ubKD+g929ao7C/4qDDRYx6AGxmFNaZsjRdwiMFDvMYodL+teQyGQQkiVyGdyFj/ghKocV" +
+            "bAJh2fw5MS13tJMucCjSCQF2Jx7cxiJgJEBJDRy6HJpRfhJBHyQm/yoddV9/GK0CdfQgRA1/bGMCFomzir+ommOqFXTA==\"\n" +
             "            ],\n" +
             "            \"x5t\": \"xD8YYUmJhMGs4usWgGNOYhRsNPY\",\n" +
             "            \"x5t#S256\": \"vYkTGwiVvDxezePxhuOQfeQ-DoS_4h_LUXvhWCrUoJw\"\n" +
@@ -104,13 +132,14 @@ class KBOAuth2HandlerTest {
         assertTrue(roles.contains("default-roles-test-realm"), "There should be a role 'default-roles-test-realm'");
     }
 
-   @Test
+    
+    @Test
     void validateSignature() throws VerificationException {
-       KBOAuth2Handler handler = KBOAuth2Handler.getInstance();
+        KBOAuth2Handler handler = KBOAuth2Handler.getInstance();
 
-       injectPublicKey(handler);
+        injectPublicKey(handler);
 
-       handler.checkTokenSignature(SAMPLE_ACCESS_TOKEN_1, KBOAuth2Handler.MODE.ENABLED);
+        handler.checkTokenSignature(SAMPLE_ACCESS_TOKEN_1, KBOAuth2Handler.MODE.ENABLED);
     }
 
     @Test
