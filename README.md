@@ -67,6 +67,8 @@ Talk to a developer familiar with OAUth2 about getting the variables for the cal
  * `password`: The password for the user. As a developer, this will probably be one's standard password for the AD  
  * `clientsecret`: Key needed to request a token from the clientid, e.g. `7eec0aeb-1ae8-4074-801b-270ad79fbc48`
 
+**TODO**: Describe how to call an endpoint with curl, providing the access token.
+
 
 ### OpenAPI
 
@@ -82,6 +84,11 @@ required to call the methods. Two roles are meta-roles:
 * `public`: Anyone can call the method, but if the call has an OAuth2 accessToken, the roles specified in the token might give extra privileges (access to more material, extended metadata etc.)
  * `any`: An accessToken is required for the endpoint, but no specific role is needed. It is up to the implementation to . 
 
+The generated API and skeleton implementation will be OAuth2-enabled after this. If access is determined solely on
+roles defines in the realm, no further action is required. If the endpoint is marked with `public` or `any`, getting
+a list of the roles for the caller is normally needed.
+
+**TODO** Figure out how to retrieve the roles that are stored in the `Message` with key `TokenRoles` (how to get the Message really)
 
 ## Other
 
