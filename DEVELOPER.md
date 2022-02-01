@@ -188,7 +188,7 @@ the Maven release plugin handles that detail.
 Ensure that the about-to-be-released version is noted in the changelog entry
 1. Ensure all local changes are committed and pushed.
 1. Ensure that your local `.m2/settings.xml` has a current `sbforge-nexus`-setup
-(contact Kim Christensen @kb or another Maven-wrangler for help)
+(contact Kim Christensen at the Royal Danish Library or another Maven-wrangler for help)
 1. Follow the instructions on
 [Guide to using the release plugin](https://maven.apache.org/guides/mini/guide-releasing.html)
 which boils down to

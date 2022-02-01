@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
  * NOTE: If present, authentication objects for {@link #ACCESS_TOKEN}, {@link #TOKEN_ROLES} and {@link #ENDPOINT_ROLES}
  * are added to the message when {@link #handleMessage(Message)} is called. These can be retrieved using
  */
-// TODO: Throw proper HTTP Error codes-exceptions
 public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger log = LoggerFactory.getLogger(KBAuthorizationInterceptor.class);
     private static final String AUTHORIZATION = "Authorization";

@@ -52,6 +52,6 @@ config:
     client:
       # Matches OAuth2 server Client ID
       id: 'test'
-      # Used for application<->application (service account: client_id + secret)
-      # Or for client->application (client fetches a token)
+      # Secret is used if the service needs to request a token from the OAuth2 server.
+      # This typically used for calls between services, where there is a need for elevated access.
       secret: '8ebc0aeb-1ae8-4474-851b-270ae79fdc11'
