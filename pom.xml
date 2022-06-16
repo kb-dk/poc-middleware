@@ -29,8 +29,8 @@
 
     <scm>
         <url>https://github.com/kb-dk/poc-middleware</url>
-        <connection>scm:git:ssh://git@github.com:kb-dk/poc-middleware.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:kb-dk/poc-middleware.git</developerConnection>
+        <connection>scm:git:ssh://git@github.com/kb-dk/poc-middleware.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/kb-dk/poc-middleware.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
