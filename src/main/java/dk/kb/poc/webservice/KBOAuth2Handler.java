@@ -166,7 +166,8 @@ public class KBOAuth2Handler {
     /**
      * No authorization header. Either throw an exception or accept entry if the endpoint is marked as public.
      * @param endpoint name of the endpoint. Used for exceptions and logging.
-     * @param endpointRoles the roles for the endpoint. If {@code public} is one of the roles, access is granted.
+     * @param endpointRoles the roles for the endpoint. If {@code public} is one of the roles or if there are
+     *                      no roles, access is granted.
      */
     public void handleNoAuthorization(String endpoint, Set<String> endpointRoles) {
         switch (mode) {
