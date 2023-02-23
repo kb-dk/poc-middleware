@@ -1,16 +1,18 @@
 package dk.kb.poc.api.v1.impl;
 
 import dk.kb.poc.BackendHelper;
-import dk.kb.poc.backend.api.v1.PocBackendApi;
 import dk.kb.poc.api.v1.PocMiddlewareApi;
+import dk.kb.poc.backend.api.v1.PocBackendApi;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.poc.webservice.ExportWriter;
 import dk.kb.poc.webservice.ExportWriterFactory;
+import dk.kb.poc.webservice.KBAuthorizationInterceptor;
 import dk.kb.poc.webservice.exception.InternalServiceException;
 import dk.kb.poc.webservice.exception.InvalidArgumentServiceException;
 import dk.kb.poc.webservice.exception.ServiceException;
 import org.apache.cxf.interceptor.InInterceptors;
 import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.apache.cxf.jaxrs.utils.JAXRSUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,6 +77,22 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
 
     private static final PocBackendApi backend = BackendHelper.getBackend();
 
+
+    @Override
+    public String probeRead() {
+        return "OK";
+    }
+
+    @Override
+    public String probeWrite() {
+        return "OK";
+    }
+
+    @Override
+    public String probeWhoami() {
+        Object roles = JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.TOKEN_ROLES);
+        return roles == null ? "N/A" : roles.toString();
+    }
 
     /**
      * Add or update a single book

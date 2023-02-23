@@ -60,6 +60,60 @@ paths:
               schema:
                 type: string
 
+  /probe/read:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'OAuth2 check: If and only if the user belongs to the group "read" the service will answer "OK"'
+      operationId: probeRead
+      security:
+        - KBOAuth:
+          - read
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'OK'
+
+  /probe/write:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'OAuth2 check: If and only if the user belongs to the group "write" the service will answer "OK"'
+      operationId: probeWrite
+      security:
+        - KBOAuth:
+          - write
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'OK'
+
+  /probe/whoami:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'OAuth2 check: The groups that the caller belongs to or "N/A" is there are no groups'
+      operationId: probeWhoami
+      security:
+        - KBOAuth:
+          - any
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: '[read, write]]'
+
   /bookcount:
     get:
       tags:
