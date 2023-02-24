@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import dk.kb.poc.api.v1.impl.PocMiddlewareApiServiceImpl;
+import dk.kb.util.webservice.exception.ServiceExceptionMapper;
 
 
 public class Application_v1 extends javax.ws.rs.core.Application {

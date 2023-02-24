@@ -14,7 +14,7 @@
  */
 package dk.kb.poc.webservice;
 
-import dk.kb.poc.webservice.exception.InternalServiceException;
+import dk.kb.util.webservice.exception.InternalServiceException;
 import io.swagger.annotations.AuthorizationScope;
 import org.apache.cxf.helpers.CastUtils;
 import org.apache.cxf.interceptor.Fault;

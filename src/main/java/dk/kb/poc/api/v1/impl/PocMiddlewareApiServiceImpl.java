@@ -4,12 +4,12 @@ import dk.kb.poc.BackendHelper;
 import dk.kb.poc.api.v1.PocMiddlewareApi;
 import dk.kb.poc.backend.api.v1.PocBackendApi;
 import dk.kb.poc.model.v1.BookDto;
-import dk.kb.poc.webservice.ExportWriter;
-import dk.kb.poc.webservice.ExportWriterFactory;
+import dk.kb.util.webservice.stream.ExportWriter;
+import dk.kb.util.webservice.stream.ExportWriterFactory;
 import dk.kb.poc.webservice.KBAuthorizationInterceptor;
-import dk.kb.poc.webservice.exception.InternalServiceException;
-import dk.kb.poc.webservice.exception.InvalidArgumentServiceException;
-import dk.kb.poc.webservice.exception.ServiceException;
+import dk.kb.util.webservice.exception.InternalServiceException;
+import dk.kb.util.webservice.exception.InvalidArgumentServiceException;
+import dk.kb.util.webservice.exception.ServiceException;
 import org.apache.cxf.interceptor.InInterceptors;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.jaxrs.utils.JAXRSUtils;
@@ -213,7 +213,7 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
             return output -> {
                 try (ExportWriter writer = ExportWriterFactory.wrap(
                         output, httpServletResponse, httpHeaders,
-                        format, ExportWriterFactory.FORMAT.jsonl, false)) {
+                        format, ExportWriterFactory.FORMAT.jsonl, false, "books")) {
                     BackendHelper.getBooks(writer, query, max); // Not that format is chosen by BackendHelper
                 }
             };

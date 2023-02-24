@@ -21,11 +21,10 @@ import dk.kb.poc.backend.invoker.v1.Configuration;
 import dk.kb.poc.backend.model.v1.InternalBookDto;
 import dk.kb.poc.config.ServiceConfig;
 import dk.kb.poc.model.v1.BookDto;
-import dk.kb.poc.webservice.ExportWriter;
+import dk.kb.util.webservice.stream.ExportWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;

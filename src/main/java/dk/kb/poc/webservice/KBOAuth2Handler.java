@@ -15,7 +15,7 @@
 package dk.kb.poc.webservice;
 
 import dk.kb.poc.config.ServiceConfig;
-import dk.kb.poc.webservice.exception.InternalServiceException;
+import dk.kb.util.webservice.exception.InternalServiceException;
 import dk.kb.util.yaml.YAML;
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.interceptor.Fault;
