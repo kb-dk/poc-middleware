@@ -2,7 +2,7 @@
 <Context override="true" docBase="/app/tomcat-apps/poc-middleware.war">
 
     <Environment name="poc-middleware-logback-config"
-        value="/app/conf/logback.xml"
+        value="/app/conf/poc-middleware.logback.xml"
         type="java.lang.String"
         override="false"/>
     <Environment name="application-config"

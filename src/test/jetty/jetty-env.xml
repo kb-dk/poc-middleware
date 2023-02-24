@@ -4,7 +4,7 @@
     <New id="logback" class="org.eclipse.jetty.plus.jndi.EnvEntry">
         <Arg>${project.artifactId}-logback-config</Arg>
         <Arg type="java.lang.String">
-            ${basedir}/target/jetty-res/logback.xml
+            ${basedir}/target/jetty-res/poc-middleware.logback.xml
         </Arg>
         <Arg type="boolean">true</Arg>
     </New>
