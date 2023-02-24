@@ -82,7 +82,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
         final String endpoint = getEndpointName(message);
         log.debug("handleMessage({}) called", endpoint);
 
-        if (getAnnotation(message) != null) {
+        if (getAnnotation(message) == null) {
             log.debug("Endpoint '{}' not annotated: No authorization required", endpoint);
             return;
         }
