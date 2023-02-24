@@ -94,6 +94,11 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
         return roles == null ? "N/A" : roles.toString();
     }
 
+    @Override
+    public String probeAny() {
+        return "OK";
+    }
+
     /**
      * Add or update a single book
      *

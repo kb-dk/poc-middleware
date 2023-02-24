@@ -96,6 +96,24 @@ paths:
                 type: string
                 example: 'OK'
 
+  /probe/any:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'OAuth2 check: If and only if the user has at least one group (any group will work) the service will answer "OK"'
+      operationId: probeAny
+      security:
+        - KBOAuth:
+          - any
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'OK'
+
   /probe/whoami:
     get:
       tags:
@@ -104,7 +122,7 @@ paths:
       operationId: probeWhoami
       security:
         - KBOAuth:
-          - any
+          - public
       responses:
         '200':
           description: 'OK'
