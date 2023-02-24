@@ -33,6 +33,7 @@ public class ContextListener implements ServletContextListener {
             log.info("Initializing service v{}", getClass().getPackage().getImplementationVersion());
             InitialContext ctx = new InitialContext();
             String configFile = (String) ctx.lookup("java:/comp/env/application-config");
+            log.info("configFile pattern retrieved from env application-config: '" + configFile + "'");
             //TODO this should not refer to something in template. Should we perhaps use reflection here?
             ServiceConfig.initialize(configFile);
         } catch (NamingException e) {
