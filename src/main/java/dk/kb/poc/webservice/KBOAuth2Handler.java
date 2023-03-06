@@ -180,6 +180,11 @@ public class KBOAuth2Handler {
                               endpoint, KBAuthorization.PUBLIC);
                     break;
                 }
+                if (endpointRoles.contains(KBAuthorization.ANY)) {
+                    throw new Fault(new ValidationException(
+                            "Authorization failed as there were no Authorization defined in request and endpoint " +
+                            endpoint + " requires it to be present"));
+                }
                 throw new Fault(new ValidationException(
                         "Authorization failed as there were no Authorization defined in request and endpoint " +
                         endpoint + " requires it to be present with roles " + endpointRoles));
@@ -369,15 +374,16 @@ public class KBOAuth2Handler {
          }
 
          log.info("Retrieving public key for kid='{}' in realm '{}'", kid, realm);
+         URL publicKeyURL = null;
          try {
-         // https://keycloak-keycloak.apps.someopenshiftserver.example.org/auth/realms/brugerbasen/protocol/openid-connect/certs
-             URL publicKeyURL = new URL(baseurl + "/" + realm + "/protocol/openid-connect/certs");
+             // https://keycloak-keycloak.apps.someopenshiftserver.example.org/auth/realms/brugerbasen/protocol/openid-connect/certs
+             publicKeyURL = new URL(baseurl + "/" + realm + "/protocol/openid-connect/certs");
              log.debug("getRealmKey: Reading content of '{}'", publicKeyURL);
              String publicKeysString = IOUtils.toString(publicKeyURL, StandardCharsets.UTF_8);
              publicKey = extractPublicKey(kid, publicKeysString);
              realmKeys.put(cacheKey, publicKey);
          } catch (IOException e) {
-             log.warn("Could not get public key for kid " + kid + " in realm " + realm, e);
+             log.warn("Could not get public key for kid " + kid + " in realm " + realm + " from " + publicKeyURL, e);
              throw new VerificationException("Could not get public key for kid " + kid + " in realm " + realm, e);
          }
          return publicKey;
