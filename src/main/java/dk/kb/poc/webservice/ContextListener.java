@@ -1,6 +1,9 @@
 package dk.kb.poc.webservice;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.net.InetAddress;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -8,6 +11,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
 import dk.kb.poc.config.ServiceConfig;
+import dk.kb.util.BuildInfoManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +34,16 @@ public class ContextListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         try {
-            log.info("Initializing service v{}", getClass().getPackage().getImplementationVersion());
+            RuntimeMXBean mxBean = ManagementFactory.getRuntimeMXBean();
+            if (mxBean.getInputArguments().stream().noneMatch(arg -> arg.startsWith("-Xmx"))) {
+                log.warn("Java heap size (-Xmx option) is not specified. " +
+                         "In stage or production this is almost always an error");
+            }
+
+            log.info("Initializing service {} {} build {} using Java {} with max heap {}MB on machine {}",
+                     BuildInfoManager.getName(), BuildInfoManager.getVersion(), BuildInfoManager.getBuildTime(),
+                     System.getProperty("java.version"), Runtime.getRuntime().maxMemory()/1048576,
+                     InetAddress.getLocalHost().getHostName());
             InitialContext ctx = new InitialContext();
             String configFile = (String) ctx.lookup("java:/comp/env/application-config");
             log.info("configFile pattern retrieved from env application-config: '" + configFile + "'");

@@ -357,6 +357,14 @@
                 <directory>src/main/resources</directory>
                 <filtering>false</filtering>
             </resource>
+            <!-- 2: Copy only build.properties with filtering -->
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>build.properties</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>
@@ -599,6 +607,13 @@
                     <!--Enable maven filtering for the web.xml-->
                     <filteringDeploymentDescriptors>true</filteringDeploymentDescriptors>
                     <webResources>
+                        <webResource> <!-- Store application name, version and build time -->
+                            <directory>${basedir}/src/main/resources/</directory>
+                            <includes>
+                                <include>build.properties</include>
+                            </includes>
+                            <filtering>true</filtering>
+                        </webResource>
                         <resource>
                             <!--Include the openapi spec files so we can serve them-->
                             <directory>${project.build.outputDirectory}</directory>
