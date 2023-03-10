@@ -3,6 +3,7 @@ package dk.kb.poc.api.v1.impl;
 import dk.kb.poc.BackendHelper;
 import dk.kb.poc.api.v1.PocMiddlewareApi;
 import dk.kb.poc.backend.api.v1.PocBackendApi;
+import dk.kb.poc.backend.model.v1.InternalBookDto;
 import dk.kb.poc.model.v1.BookDto;
 import dk.kb.util.webservice.stream.ExportWriter;
 import dk.kb.util.webservice.stream.ExportWriterFactory;
@@ -163,13 +164,21 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
      */
     @Override
     public BookDto getBook(String id) throws ServiceException {
-        log.info("getBook({}) begin", id);
+        log.info("getBook({}) called", id);
+        InternalBookDto book;
+
         try {
-            return BackendHelper.internalBookToBook(backend.getBook(id));
+            book = backend.getBook(id);
+        } catch (Exception e) {
+            log.warn("Unable to retrieve book '" + id + "' from backend", e);
+            throw new InternalServiceException("Unable to retrieve book '" + id + "' from backend", e);
+        }
+
+        try {
+            return BackendHelper.internalBookToBook(book);
         } catch (Exception e){
-            throw handleException(e);
-        } finally {
-            log.info("getBook({}) finish", id);
+            throw new InternalServiceException(
+                    "Unable to convert backend book to middleware book for book '" + id + "'", e);
         }
     }
 
