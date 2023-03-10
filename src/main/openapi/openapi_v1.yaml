@@ -337,7 +337,8 @@ components:
       description: 'This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)'
       flows:
         implicit:   # <---- OAuth flow(authorizationCode, implicit, password or clientCredentials)
-          authorizationUrl: https://api.example.com/oauth2/authorize # Overridden by the configuration
+          authorizationUrl: 'https://keycloak-devel-01.kb.dk/realms/ds-poc/protocol/openid-connect/auth'
+          #authorizationUrl: https://api.example.com/oauth2/authorize # Overridden by the configuration
           scopes:
             # Project specific roles
             read: 'read data'

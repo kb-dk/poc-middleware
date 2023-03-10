@@ -53,11 +53,30 @@
         plugins: [
           SwaggerUIBundle.plugins.DownloadUrl
         ],
-        layout: "StandaloneLayout"
+        layout: "StandaloneLayout",
+        // https://github.com/swagger-api/swagger-ui/blob/master/dist/oauth2-redirect.html
+        // https://stackoverflow.com/questions/56982278/swagger-with-google-oauth-2-0-authorization
+        // https://github.com/swagger-api/swagger-ui/issues/5384
+        oauth2RedirectUrl: window.location.href.replace(/\/api\/.*/, "/api/") + "oauth2-redirect.html"
+        //oauth2RedirectUrl: "http://thedevelopermachine.statsbiblioteket.dk:12345/poc-middleware/api/oauth2-redirect.html"
+        //oauth2RedirectUrl: window.location.href + "oauth2-redirect.html"
       })
       // End Swagger UI call region
-
       window.ui = ui
+
+      // https://swagger.io/docs/open-source-tools/swagger-ui/usage/oauth2/
+      ui.initOAuth({
+        clientId: "test_client",
+        //clientSecret: "your-client-secret-if-required",
+        //realm: "ds-poc",
+        //appName: "poc-middleware",
+        scopeSeparator: ",",
+        // Setting scopes makes KeyCloak fail
+        //scopes: "read write",
+        //additionalQueryStringParams: {test: "hello"}
+        //useBasicAuthenticationWithAccessCodeGrant: true,
+        //usePkceWithAuthorizationCodeGrant: true
+      })
     }
   </script>
   </body>
