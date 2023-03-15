@@ -49,7 +49,11 @@ import java.util.stream.Collectors;
  * It is up to the implementation to determine what the response can be.
  *
  * NOTE: If present, authentication objects for {@link #ACCESS_TOKEN}, {@link #TOKEN_ROLES} and {@link #ENDPOINT_ROLES}
- * are added to the message when {@link #handleMessage(Message)} is called. These can be retrieved using
+ * are added to the message when {@link #handleMessage(Message)} is called. These can be retrieved using e.g.
+ * {@code JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.TOKEN_ROLES)}.
+ *
+ * Note 2: If an endpoint is marked as {@link KBAuthorization#PUBLIC} but fails validation, {@link #VALID_TOKEN}
+ * will be set to {@code false} and the reason for failed validation will be stated in {@link #FAILED_REASON}.
  */
 public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message> {
     private static final Logger log = LoggerFactory.getLogger(KBAuthorizationInterceptor.class);
@@ -68,6 +72,17 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
      * Key for storing the roles defined for the endpoint from the Message.
      */
     public static final String ENDPOINT_ROLES = "EndpointRoles"; // Set<String>
+
+    /**
+     * Whether or not the access token validates.
+     * If the value is false, {@link #TOKEN_ROLES} will be empty and {@link #FAILED_REASON} will be present.
+     */
+    public static final String VALID_TOKEN = "ValidToken"; // Boolean
+
+    /**
+     * If {@link #VALID_TOKEN} is false, the reason for failed validation will be present here.
+     */
+    public static final String FAILED_REASON = "FailedReason"; // String
 
     public KBAuthorizationInterceptor() {
         super(Phase.PRE_INVOKE);
@@ -102,7 +117,7 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
 
         String accessTokenString = getAccessTokenString(message);
         if (accessTokenString == null) {
-            handler.handleNoAuthorization(endpoint, endpointRoles);
+            handler.handleNoAuthorization(endpoint, endpointRoles, false, null);
             return;
         }
 
@@ -113,13 +128,18 @@ public class KBAuthorizationInterceptor extends AbstractPhaseInterceptor<Message
             AccessToken accessToken = validateAuthorization(message);
             message.put(ACCESS_TOKEN, accessToken);
             message.put(TOKEN_ROLES, handler.getTokenRoles(accessToken));
+            message.put(VALID_TOKEN, true);
             handler.validateRoles(endpoint, accessToken, endpointRoles);
         } catch (VerificationException e) {
-            log.warn("VerificationException validating authorization", e);
-            throw new Fault(e);
+            log.warn("VerificationException validating authorization for endpoint '" + endpoint + "'", e);
+            message.put(VALID_TOKEN, false);
+            message.put(FAILED_REASON, e.getMessage());
+            handler.handleNoAuthorization(endpoint, endpointRoles, true, e.getMessage());
         } catch (Exception e) {
-            log.warn("Non-VerificationException validating authorization", e);
-            throw new Fault(e);
+            log.warn("Non-VerificationException validating authorization for endpoint '" + endpoint + "'", e);
+            message.put(VALID_TOKEN, false);
+            message.put(FAILED_REASON, "Unknown");
+            handler.handleNoAuthorization(endpoint, endpointRoles, true, null);
         }
     }
 

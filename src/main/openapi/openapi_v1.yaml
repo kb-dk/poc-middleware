@@ -114,6 +114,21 @@ paths:
                 type: string
                 example: 'OK'
 
+  /probe/none:
+    get:
+      tags:
+        - '${project.name}'
+      summary: 'OAuth2 null-check: No security setup whatsoever. Should always be callable'
+      operationId: probeNone
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'OK'
+
   /probe/whoami:
     get:
       tags:

@@ -33,7 +33,14 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface KBAuthorization {
+    /**
+     * The role "public" always means "access for all" and is not checked against user roles.
+     * Access is granted even if no access token is provided or the access token fails validation.
+     */
     String PUBLIC = "public";
+    /**
+     * The role "any" means that any user role is accepted when verifying the access token:
+     */
     String ANY = "any";
 
     String value();

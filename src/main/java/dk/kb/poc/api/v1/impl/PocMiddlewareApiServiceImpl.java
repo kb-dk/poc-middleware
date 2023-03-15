@@ -92,11 +92,24 @@ public class PocMiddlewareApiServiceImpl implements PocMiddlewareApi {
     @Override
     public String probeWhoami() {
         Object roles = JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.TOKEN_ROLES);
-        return roles == null ? "N/A" : roles.toString();
+        Object valid = JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.VALID_TOKEN);
+        if (valid == null) {
+            return "No_access_token";
+        }
+        if (Boolean.TRUE.equals(valid)) {
+            return roles.toString();
+        }
+        Object reason = JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.FAILED_REASON);
+        return "Invalid_access_token(reason=" + reason + ")";
     }
 
     @Override
     public String probeAny() {
+        return "OK";
+    }
+
+    @Override
+    public String probeNone() {
         return "OK";
     }
 
