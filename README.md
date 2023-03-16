@@ -88,7 +88,23 @@ The generated API and skeleton implementation will be OAuth2-enabled after this.
 roles defines in the realm, no further action is required. If the endpoint is marked with `public` or `any`, getting
 a list of the roles for the caller is normally needed.
 
-**TODO** Figure out how to retrieve the roles that are stored in the `Message` with key `TokenRoles` (how to get the Message really)
+The endpoint `whoami` demonstrates retrieval of roles and other metadata from the OAuth process.
+At the core it is simply
+```java
+    Object roles = JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.TOKEN_ROLES);
+```
+where the `roles` Object (if defined) is a `Set<String>`. In order for this to work it must be done in the calling
+Thread; if supporting classes needs roles they should be resolved in the endpoint implementation class and explicitly
+provided as arguments in the method calls, e.g.
+```java
+    @Override
+    public String readBook(String id){
+        Object rolesObj = JAXRSUtils.getCurrentMessage().get(KBAuthorizationInterceptor.TOKEN_ROLES);
+        Set<String> roles = rolesObj == null ? Collection.emptySet() : (Set<String>)rolesObj;
+        BookHandler.getInstance().retrieveBook(id, roles);
+        ...
+    }
+```
 
 ## Other
 
